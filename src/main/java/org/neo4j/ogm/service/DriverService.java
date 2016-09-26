@@ -32,7 +32,9 @@ public class DriverService {
     private static final Logger logger = LoggerFactory.getLogger(DriverService.class);
 
     private static Driver load(String className) {
-
+        // Hard coded the Bolt Driver due to OSGi problem in the following code
+        return new org.neo4j.ogm.drivers.bolt.driver.BoltDriver();
+        /*
         for (Driver driver : ServiceLoader.load(Driver.class)) {
             try {
                 if (driver.getClass().getName().equals(className)) {
@@ -45,7 +47,7 @@ public class DriverService {
         }
 
         throw new ServiceNotFoundException("Driver: " + className);
-
+*/
     }
 
     /**
