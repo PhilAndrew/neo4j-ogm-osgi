@@ -1,11 +1,13 @@
 
 name := "neo4j-ogm-osgi"
 
-version := "1.2"
+version := "1.4"
 
 scalaVersion := "2.11.8"
 
 organization        := "universe"
+
+libraryDependencies += "org.osgi" % "osgi.core" % "6.0.0"
 
 // Bolt Driver
 
