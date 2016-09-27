@@ -1,7 +1,9 @@
 
 ### Copyright
 
-All copyright of the code written by Neo4J belongs to Neo4J and you should refer to them for any copyright issue. I havn't investigated the copyright side of this yet so this is my lazy disclaimer.
+All copyright of the code written by Neo4J belongs to Neo4J and you should refer to them for any copyright issue. Refer to Neo4J OGM [Neo4J OGM](https://github.com/neo4j/neo4j-ogm).
+
+I havn't investigated the copyright side of this yet so this is my lazy disclaimer.
 
 ### Neo4j OGM OSGi
 
