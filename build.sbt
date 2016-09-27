@@ -7,6 +7,21 @@ scalaVersion := "2.11.8"
 
 organization        := "universe"
 
+
+// Why
+
+
+// https://mvnrepository.com/artifact/org.apache.lucene/lucene-queries
+libraryDependencies += "org.apache.lucene" % "lucene-queries" % "6.2.0"
+
+libraryDependencies += "org.apache.lucene" % "lucene-sandbox" % "6.2.0"
+
+libraryDependencies += "commons-httpclient" % "commons-httpclient" % "3.1"
+
+libraryDependencies += "commons-logging" % "commons-logging" % "1.2"
+
+// ???
+
 libraryDependencies += "org.osgi" % "osgi.core" % "6.0.0"
 
 // Bolt Driver
