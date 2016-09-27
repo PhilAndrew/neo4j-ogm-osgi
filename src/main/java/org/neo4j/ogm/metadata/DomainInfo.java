@@ -337,7 +337,7 @@ public class DomainInfo implements ClassFileProcessor {
     }
 
     private ClassInfo getClassInfo(String fullOrPartialClassName, Map<String, ClassInfo> infos) {
-        if (Neo4JOGM._context == null) {
+        if (Neo4JOGM.getContextList().size() == 0) {
             ClassInfo match = null;
             for (String fqn : infos.keySet()) {
                 if (fqn.endsWith("." + fullOrPartialClassName) || fqn.equals(fullOrPartialClassName)) {

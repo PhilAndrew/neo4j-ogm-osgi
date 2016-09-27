@@ -49,7 +49,7 @@ abstract class CompilerService {
      * @return the named Driver if found, otherwise throws a ServiceNotFoundException
      */
     private static org.neo4j.ogm.compiler.Compiler load(String className) {
-        if (Neo4JOGM._context == null) {
+        if (Neo4JOGM.getContextList().size() == 0) {
             for (Compiler compiler : ServiceLoader.load(Compiler.class)) {
                 try {
                     if (compiler.getClass().getName().equals(className)) {

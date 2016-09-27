@@ -15,6 +15,7 @@ package org.neo4j.ogm.classloader;
 
 import org.neo4j.ogm.Neo4JOGM;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 
 /**
  * The public API for metadata class loading in the OGM.
@@ -37,22 +38,28 @@ public abstract class MetaDataClassLoader {
     private static final ClassLoader classLoader = ClassLoaderResolver.resolve();
 
     public static Class loadClass(final String name) throws ClassNotFoundException {
-        if (Neo4JOGM._context == null) {
+        if (Neo4JOGM.getContextList().size() == 0) {
             return Class.forName(name, false, classLoader);
         } else {
             // Using the OSGi classloader and searching through the loaded bundles
             Class foundClass = null;
-            Bundle[] bundles = Neo4JOGM._context.getBundles();
-            for (Bundle bundle : bundles) {
-                try {
-                    Class c = bundle.loadClass(name);
-                    if (c != null) {
-                        foundClass = c;
-                        break;
+            java.util.List<BundleContext> contextList = Neo4JOGM.getContextList();
+
+            start:
+            for (BundleContext bundleContext : contextList) {
+                Bundle[] bundles = bundleContext.getBundles();
+                for (Bundle bundle : bundles) {
+                    try {
+                        Class c = bundle.loadClass(name);
+                        if (c != null) {
+                            foundClass = c;
+                            break start;
+                        }
+                    } catch (java.lang.ClassNotFoundException ex) {
                     }
-                } catch (java.lang.ClassNotFoundException ex) {
                 }
             }
+
             return foundClass;
         }
     }
