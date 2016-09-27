@@ -1,4 +1,8 @@
 
+### Copyright
+
+All copyright of the code written by Neo4J belongs to Neo4J and you should refer to them for any copyright issue. I havn't investigated the copyright side of this yet so this is my lazy disclaimer.
+
 ### Neo4j OGM OSGi
 
 This is Neo4j OGM working in OSGi. It is used by my Scala project [Jump Micro](https://github.com/PhilAndrew/JumpMicro).
