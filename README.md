@@ -1,11 +1,15 @@
 
-This is Neo4j OGM working in OSGi.
+### Neo4j OGM OSGi
+
+This is Neo4j OGM working in OSGi. It is used by my Scala project [Jump Micro](https://github.com/PhilAndrew/JumpMicro).
 
 I copied the Neo4j OGM code and placed it all into one project here, the Neo4j OGM code is not in one project, it is split into a few different ones such as API, Bolt driver, HTTP driver etc. By placing all the code into one project it simplifies the OSGi resolution of packages as this produces just one artifact rather than multiple.
 
 Here it is assumed you are using [SBT Osgi Felix](https://github.com/doolse/sbt-osgi-felix) in your OSGi project to include this in a normal OSGi project. This project does not produce an OSGi bundle, it produces a local artifact which can be used by SBT Osgi Felix. 
 
-This could easily be adapted to produce an OSGi bundle but I wish to use this code within my SBT Osgi Felix project. 
+This could easily be adapted to produce an OSGi bundle but I wish to use this code within my SBT Osgi Felix project. Create an issue and ask me if you want to know how to make an OSGi bundle.
+ 
+Its not tied to Scala, I just want to use SBT to build the project as it is simple to use built.sbt. You can use this from Java as well. 
 
 Git clone, to use it in your OSGi project. Run this in this project
 
