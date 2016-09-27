@@ -17,8 +17,10 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -97,6 +99,70 @@ public class ClassInfo {
     private volatile FieldInfo identityField = null;
     private volatile FieldInfo labelField = null;
     private volatile boolean labelFieldMapped = false;
+
+    static String getDescriptorForClass(final Class c)
+    {
+        if(c.isPrimitive())
+        {
+            if(c==byte.class)
+                return "B";
+            if(c==char.class)
+                return "C";
+            if(c==double.class)
+                return "D";
+            if(c==float.class)
+                return "F";
+            if(c==int.class)
+                return "I";
+            if(c==long.class)
+                return "J";
+            if(c==short.class)
+                return "S";
+            if(c==boolean.class)
+                return "Z";
+            if(c==void.class)
+                return "V";
+            throw new RuntimeException("Unrecognized primitive "+c);
+        }
+        if(c.isArray()) return c.getName().replace('.', '/');
+        return ('L'+c.getName()+';').replace('.', '/');
+    }
+
+    public ClassInfo(Class<?> c) {
+        int m = c.getModifiers();
+        isInterface = Modifier.isInterface( m ); // c.isInterface();
+        isAbstract = Modifier.isAbstract( m ); // c.isAbstract();
+        isEnum = c.isEnum();
+
+        className = c.getName();
+
+        Annotation[] ann = c.getAnnotations();
+        for (Annotation annotation : ann) {
+            AnnotationInfo a = null;
+            a = new AnnotationInfo();
+            a.setName(annotation.annotationType().getName());
+            annotationsInfo.add(a);
+        }
+
+        Field[] fields = c.getDeclaredFields();
+        for (Field field : fields) {
+            ObjectAnnotations annotations = new ObjectAnnotations();
+            Annotation[] annField = field.getAnnotations();
+            Boolean isGraphId = false;
+            for (Annotation annotation : annField) {
+                annotations.setName(annotation.annotationType().getName());
+                if (annotation.annotationType().getName()=="org.neo4j.ogm.annotation.GraphId") {
+                    isGraphId = true;
+                }
+            }
+            FieldInfo fieldInfo = new FieldInfo(field.getName(), getDescriptorForClass(field.getType()), null, annotations);
+            if (isGraphId) identityField = fieldInfo;
+
+            fieldsInfo.set(fieldInfo.getName(), fieldInfo);
+        }
+
+        Method[] methods = c.getDeclaredMethods();
+    }
 
     // todo move this to a factory class
     public ClassInfo(InputStream inputStream) throws IOException {

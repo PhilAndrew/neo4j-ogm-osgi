@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.neo4j.ogm.Neo4JOGM;
 import org.neo4j.ogm.utils.ClassUtils;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
 import org.neo4j.ogm.exception.MappingException;
@@ -336,17 +337,30 @@ public class DomainInfo implements ClassFileProcessor {
     }
 
     private ClassInfo getClassInfo(String fullOrPartialClassName, Map<String, ClassInfo> infos) {
-        ClassInfo match = null;
-        for (String fqn : infos.keySet()) {
-            if (fqn.endsWith("." + fullOrPartialClassName) || fqn.equals(fullOrPartialClassName)) {
-                if (match == null) {
-                    match = infos.get(fqn);
-                } else {
-                    throw new MappingException("More than one class has simple name: " + fullOrPartialClassName);
+        if (Neo4JOGM._context == null) {
+            ClassInfo match = null;
+            for (String fqn : infos.keySet()) {
+                if (fqn.endsWith("." + fullOrPartialClassName) || fqn.equals(fullOrPartialClassName)) {
+                    if (match == null) {
+                        match = infos.get(fqn);
+                    } else {
+                        throw new MappingException("More than one class has simple name: " + fullOrPartialClassName);
+                    }
                 }
             }
+            return match;
+        } else {
+            ClassInfo info = null;
+
+            // We just want to return simple class information
+            try {
+                Class<?> c = Class.forName(fullOrPartialClassName);
+                info = new ClassInfo(c);
+            } catch (ClassNotFoundException e) {
+            }
+
+            return info;
         }
-        return match;
     }
 
     public List<ClassInfo> getClassInfosWithAnnotation(String annotation) {
