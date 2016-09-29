@@ -351,14 +351,15 @@ public class DomainInfo implements ClassFileProcessor {
             return match;
         } else {
             ClassInfo info = null;
-
             // We just want to return simple class information
             try {
                 Class<?> c = Class.forName(fullOrPartialClassName);
                 info = new ClassInfo(c);
             } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
             return info;
         }
     }

@@ -151,7 +151,7 @@ public class ClassInfo {
             Boolean isGraphId = false;
             for (Annotation annotation : annField) {
                 annotations.setName(annotation.annotationType().getName());
-                if (annotation.annotationType().getName()=="org.neo4j.ogm.annotation.GraphId") {
+                if (annotation.annotationType().getName().equals("org.neo4j.ogm.annotation.GraphId")) {
                     isGraphId = true;
                 }
             }
@@ -162,6 +162,46 @@ public class ClassInfo {
         }
 
         Method[] methods = c.getDeclaredMethods();
+
+        // Set direct super class
+        if (c.getSuperclass()!=null) {
+            if ((c.getSuperclass()!=null) && (c.getSuperclass().getName().equals("java.lang.Object")==false)) {
+                directSuperclass = new ClassInfo(c.getSuperclass());
+                directSuperclassName = c.getName();
+
+                directSuperclass.copyFieldsAndAnnotatonsTo(fieldsInfo, fieldInfos, annotationsInfo);
+            }
+        }
+
+        // Set interfaces
+        Class[] interfaces = c.getInterfaces();
+        if ((interfaces!=null) && (interfaces.length > 0)) {
+            for (Class i : interfaces) {
+                interfacesInfo.add(new InterfaceInfo(i.getName()));
+            }
+        }
+
+        new ClassValidator(this).validate();
+    }
+
+    private void copyFieldsAndAnnotatonsTo(FieldsInfo f, Set<FieldInfo> f2, AnnotationsInfo a) {
+        try {
+            f.getFieldsHashMap().putAll(fieldsInfo.getFieldsHashMap());
+            if (fieldInfos!=null) {
+                for (FieldInfo fInfo : fieldInfos) {
+                    f2.add(fInfo);
+                }
+            }
+            if ((annotationsInfo!=null) && (annotationsInfo.list()!=null)) {
+                for (AnnotationInfo annotationInfo : annotationsInfo.list()) {
+                    a.add(annotationInfo);
+                }
+            }
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     // todo move this to a factory class

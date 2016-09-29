@@ -30,6 +30,10 @@ public class FieldsInfo {
 
     private final Map<String, FieldInfo> fields = new HashMap<>();
 
+    public Map<String, FieldInfo> getFieldsHashMap() {
+        return fields;
+    }
+
     FieldsInfo() {
     }
 
