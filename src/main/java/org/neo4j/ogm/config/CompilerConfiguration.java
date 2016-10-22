@@ -23,6 +23,7 @@ public class CompilerConfiguration {
 
     private final Configuration configuration;
 
+    // PLA: Added
     public CompilerConfiguration() {
         this.configuration = new Configuration();
     }

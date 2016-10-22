@@ -33,6 +33,7 @@ public class DriverService {
 
     private static Driver load(String className) {
         // Hard coded the Bolt Driver due to OSGi problem in the following code
+        // @todo Fix this Philip
         return new org.neo4j.ogm.drivers.bolt.driver.BoltDriver();
         /*
         for (Driver driver : ServiceLoader.load(Driver.class)) {
