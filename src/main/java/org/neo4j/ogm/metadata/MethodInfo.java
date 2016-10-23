@@ -14,14 +14,15 @@
 package org.neo4j.ogm.metadata;
 
 
-import org.neo4j.ogm.typeconversion.CompositeAttributeConverter;
-import org.neo4j.ogm.utils.RelationshipUtils;
+import java.lang.reflect.Method;
+
 import org.neo4j.ogm.annotation.Property;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.classloader.MetaDataClassLoader;
 import org.neo4j.ogm.typeconversion.AttributeConverter;
-
-import java.util.Collection;
+import org.neo4j.ogm.typeconversion.CompositeAttributeConverter;
+import org.neo4j.ogm.utils.ClassUtils;
+import org.neo4j.ogm.utils.RelationshipUtils;
 
 /**
  * @author Vince Bickers
@@ -31,6 +32,51 @@ public class MethodInfo {
 
     private static final String primitiveGetters = "()I,()J,()S,()B,()C,()F,()D,()Z,()[I,()[J,()[S,()[B,()[C,()[F,()[D,()[Z";
     private static final String primitiveSetters = "(I)V,(J)V,(S)V,(B)V,(C)V,(F)V,(D)V,(Z)V,([I)V,([J)V,([S)V,([B)V,([C)V,([F)V,([D)V,([Z)V";
+
+    private static final String simpleJavaObjectGetters =
+                    "()Ljava/lang/Object;" +
+                    "()Ljava/lang/Character;" +
+                    "()Ljava/lang/Byte;" +
+                    "()Ljava/lang/Short;" +
+                    "()Ljava/lang/Integer;" +
+                    "()Ljava/lang/Long;" +
+                    "()Ljava/lang/Float;" +
+                    "()Ljava/lang/Double;" +
+                    "()Ljava/lang/Boolean;" +
+                    "()Ljava/lang/String;" +
+                    "()[Ljava/lang/Object;" +
+                    "()[Ljava/lang/Character;" +
+                    "()[Ljava/lang/Byte;" +
+                    "()[Ljava/lang/Short;" +
+                    "()[Ljava/lang/Integer;" +
+                    "()[Ljava/lang/Long;" +
+                    "()[Ljava/lang/Float;" +
+                    "()[Ljava/lang/Double;" +
+                    "()[Ljava/lang/Boolean;" +
+                    "()[Ljava/lang/String;";
+
+    private static final String simpleJavaObjectSetters =
+                    "(Ljava/lang/Object;)V" +
+                    "(Ljava/lang/Character;)V" +
+                    "(Ljava/lang/Byte;)V" +
+                    "(Ljava/lang/Short;)V" +
+                    "(Ljava/lang/Integer;)V" +
+                    "(Ljava/lang/Long;)V)" +
+                    "(Ljava/lang/Float;)V" +
+                    "(Ljava/lang/Double;)V" +
+                    "(Ljava/lang/Boolean;)V" +
+                    "(Ljava/lang/String;)V" +
+                    "([Ljava/lang/Object;)V" +
+                    "([Ljava/lang/Character;)V" +
+                    "([Ljava/lang/Byte;)V" +
+                    "([Ljava/lang/Short;)V" +
+                    "([Ljava/lang/Integer;)V" +
+                    "([Ljava/lang/Long;)V" +
+                    "([Ljava/lang/Float;)V" +
+                    "([Ljava/lang/Double;)V" +
+                    "([Ljava/lang/Boolean;)V" +
+                    "([Ljava/lang/String;)V";
+
 
     private final String name;
     private final String descriptor;
@@ -151,14 +197,6 @@ public class MethodInfo {
         return null;
     }
 
-    public String getDescriptor() {
-        return descriptor;
-    }
-
-    public String getTypeParameterDescriptor() {
-        return typeParameterDescriptor;
-    }
-
     public ObjectAnnotations getAnnotations() {
         return annotations;
     }
@@ -167,23 +205,36 @@ public class MethodInfo {
         return other != null && getName().equals(other.getName());
     }
 
+    public boolean isGetter() {
+        return getName().startsWith("get") && descriptor.startsWith("()");
+    }
+
+    public boolean isSetter() {
+        return getName().startsWith("set") && descriptor.endsWith(")V");
+    }
+
     public boolean isSimpleGetter() {
         return primitiveGetters.contains(descriptor)
                 || hasPropertyConverter()
                 || hasCompositeConverter()
-                || usesSimpleJavaTypes();
+                || returnsSimpleJavaType();
     }
 
     public boolean isSimpleSetter() {
         return primitiveSetters.contains(descriptor)
                 || hasPropertyConverter()
                 || hasCompositeConverter()
-                || usesSimpleJavaTypes();
+                || acceptsSimpleJavaType();
     }
 
-    private boolean usesSimpleJavaTypes() {
-        return (descriptor.contains("java/lang/") && typeParameterDescriptor == null)
-                || (typeParameterDescriptor != null && typeParameterDescriptor.contains("java/lang/"));
+    private boolean returnsSimpleJavaType() {
+        return (simpleJavaObjectGetters.contains(descriptor) && typeParameterDescriptor == null)
+                || (typeParameterDescriptor != null && simpleJavaObjectGetters.contains(typeParameterDescriptor));
+    }
+
+    private boolean acceptsSimpleJavaType() {
+        return (simpleJavaObjectSetters.contains(descriptor) && typeParameterDescriptor == null)
+                || (typeParameterDescriptor != null && simpleJavaObjectSetters.contains(typeParameterDescriptor));
     }
 
     public boolean hasPropertyConverter() {
@@ -279,11 +330,11 @@ public class MethodInfo {
         return false;
     }
 
-    public boolean isCollection() {
+    public boolean isIterable() {
         String descriptorClass = getCollectionClassname();
         try {
-            Class descriptorClazz = MetaDataClassLoader.loadClass(descriptorClass);//Class.forName(descriptorClass);
-            if (Collection.class.isAssignableFrom(descriptorClazz)) {
+            Class descriptorClazz = MetaDataClassLoader.loadClass(descriptorClass);
+            if (Iterable.class.isAssignableFrom(descriptorClazz)) {
                 return true;
             }
         } catch (ClassNotFoundException e) {
@@ -309,7 +360,7 @@ public class MethodInfo {
     }
 
     public boolean isScalar() {
-        return typeParameterDescriptor == null && !descriptor.contains("[");
+        return typeParameterDescriptor == null && !isArray();
     }
 
     public boolean hasAnnotation(String annotationName) {
@@ -317,7 +368,7 @@ public class MethodInfo {
     }
 
     public boolean isArray() {
-        return descriptor.startsWith("[");
+        return descriptor.startsWith("()[") || descriptor.startsWith("([");
     }
 
     /**
@@ -326,10 +377,33 @@ public class MethodInfo {
      * @return the descriptor if the field is scalar or an array, otherwise the type parameter descriptor.
      */
     public String getTypeDescriptor() {
-        if (isScalar() || isArray()) {
+
+        if (!isIterable() || isArray()) {
             return descriptor;
         }
         return typeParameterDescriptor;
     }
 
+    /**
+     * Returns an instance of the Method represented by this MethodInfo
+     *
+     * The expectation here is that only java bean getter and setter methods will be called
+     *
+     * @param className The class declaring this method. TODO: methodInfo should know this?
+     * @return a Method, if it exists on the corresponding class.
+     */
+    public Method getMethod(String className) {
+        try {
+            if (isSetter()) {
+                return MetaDataClassLoader.loadClass(className).getMethod(name, ClassUtils.getType(descriptor));
+            }
+            if (isGetter()) {
+                return MetaDataClassLoader.loadClass(className).getMethod(name);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        throw new RuntimeException("Only JavaBean-style getter and setter methods can be invoked");
+    }
 }

@@ -69,10 +69,10 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 		this.mappingContext = mappingContext;
 	}
 
-    @Override
-    public <T> Iterable<T> map(Class<T> type, Response<GraphModel> model) {
+	@Override
+	public <T> Iterable<T> map(Class<T> type, Response<GraphModel> model) {
 
-        List<T> objects = new ArrayList<>();
+		List<T> objects = new ArrayList<>();
 		Set<Long> objectIds = new HashSet<>();
   		/*
 		 * these two lists will contain the node ids and edge ids from the response, in the order
@@ -94,13 +94,13 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 		}
 
 		model.close();
-        return objects;
-    }
+		return objects;
+	}
 
 	public Map<Long, Object> mapRelationships(GraphModel model) {
 		Map<Long, Object> results = new HashMap<>();
 		Set<Long> edgeIds = new LinkedHashSet<>();
-		mapRelationships(model,edgeIds);
+		mapRelationships(model, edgeIds);
 		for (Long id : edgeIds) {
 			Object o = mappingContext.getRelationshipEntity(id);
 			if (o != null) {
@@ -167,7 +167,6 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 					mappingContext.addNodeEntity(entity, node.getId());
 
 					nodeIds.add(node.getId());
-
 				} catch (BaseClassNotFoundException e) {
 					logger.debug(e.getMessage());
 				}
@@ -181,30 +180,30 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 		FieldWriter.write(classInfo.getField(fieldInfo), instance, id);
 	}
 
-    private void setProperties(Node nodeModel, Object instance) {
-        List<Property<String, Object>> propertyList = nodeModel.getPropertyList();
-        ClassInfo classInfo = metadata.classInfo(instance);
+	private void setProperties(Node nodeModel, Object instance) {
+		List<Property<String, Object>> propertyList = nodeModel.getPropertyList();
+		ClassInfo classInfo = metadata.classInfo(instance);
 
-        Collection<FieldInfo> compositeFields = classInfo.fieldsInfo().compositeFields();
-        if (compositeFields.size() > 0) {
-            Map<String, ?> propertyMap = PropertyUtils.toMap(propertyList);
-            for (FieldInfo field : compositeFields) {
-                Object value = field.getCompositeConverter().toEntityAttribute(propertyMap);
-                PropertyWriter writer = EntityAccessManager.getPropertyWriter(classInfo, field.getName());
-                writer.write(instance, value);
-            }
-        }
+		Collection<FieldInfo> compositeFields = classInfo.fieldsInfo().compositeFields();
+		if (compositeFields.size() > 0) {
+			Map<String, ?> propertyMap = PropertyUtils.toMap(propertyList);
+			for (FieldInfo field : compositeFields) {
+				Object value = field.getCompositeConverter().toEntityAttribute(propertyMap);
+				PropertyWriter writer = EntityAccessManager.getPropertyWriter(classInfo, field.getName());
+				writer.write(instance, value);
+			}
+		}
 
-        for (Property<?, ?> property : propertyList) {
-            writeProperty(classInfo, instance, property);
-        }
-    }
+		for (Property<?, ?> property : propertyList) {
+			writeProperty(classInfo, instance, property);
+		}
+	}
 
 	private void setProperties(Edge relationshipModel, Object instance) {
 		ClassInfo classInfo = metadata.classInfo(instance);
-        for (Property<?, ?> property : relationshipModel.getPropertyList()) {
-            writeProperty(classInfo, instance, property);
-        }
+		for (Property<?, ?> property : relationshipModel.getPropertyList()) {
+			writeProperty(classInfo, instance, property);
+		}
 	}
 
 	private void setLabels(Node nodeModel, Object instance) {
@@ -300,8 +299,8 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 		//Try mapping the incoming relation on the end node, target
 		oneToOne &= tryMappingAsSingleton(target, source, edge, Relationship.INCOMING);
 
-        // if its not one->one on BOTH sides, we'll try a one->many | many->one | many->many mapping later.
-        if (!oneToOne) {
+		// if its not one->one on BOTH sides, we'll try a one->many | many->one | many->many mapping later.
+		if (!oneToOne) {
 			oneToMany.add(edge);
 		} else {
 			RelationalWriter writer = EntityAccessManager.getRelationalWriter(metadata.classInfo(source), edge.getType(), Relationship.OUTGOING, target);
@@ -385,7 +384,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 
 		EntityCollector entityCollector = new EntityCollector();
 		List<MappedRelationship> relationshipsToRegister = new ArrayList<>();
-        Set<Edge> registeredEdges = new HashSet<>();
+		Set<Edge> registeredEdges = new HashSet<>();
 
 		// first, build the full set of related entities of each type and direction for each source entity in the relationship
 		for (Edge edge : oneToManyRelationships) {
@@ -398,33 +397,32 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 			if (relationshipEntity != null) {
 				// establish a relationship between
 				RelationalWriter outgoingWriter = findIterableWriter(instance, relationshipEntity, edge.getType(), Relationship.OUTGOING);
-				if (outgoingWriter!=null) {
+				if (outgoingWriter != null) {
 					entityCollector.recordTypeRelationship(edge.getStartNode(), relationshipEntity, edge.getType(), Relationship.OUTGOING);
 					relationshipsToRegister.add(new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), instance.getClass(), ClassUtils.getType(outgoingWriter.typeParameterDescriptor())));
 				}
 				RelationalWriter incomingWriter = findIterableWriter(parameter, relationshipEntity, edge.getType(), Relationship.INCOMING);
-				if (incomingWriter!=null) {
+				if (incomingWriter != null) {
 					entityCollector.recordTypeRelationship(edge.getEndNode(), relationshipEntity, edge.getType(), Relationship.INCOMING);
 					relationshipsToRegister.add(new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), instance.getClass(), ClassUtils.getType(incomingWriter.typeParameterDescriptor())));
 				}
-                if (incomingWriter != null || outgoingWriter != null) {
-                    registeredEdges.add(edge) ;
-                }
+				if (incomingWriter != null || outgoingWriter != null) {
+					registeredEdges.add(edge);
+				}
 			} else {
 				RelationalWriter outgoingWriter = findIterableWriter(instance, parameter, edge.getType(), Relationship.OUTGOING);
-				if (outgoingWriter!=null) {
+				if (outgoingWriter != null) {
 					entityCollector.recordTypeRelationship(edge.getStartNode(), parameter, edge.getType(), Relationship.OUTGOING);
 					relationshipsToRegister.add(new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), instance.getClass(), ClassUtils.getType(outgoingWriter.typeParameterDescriptor())));
 				}
 				RelationalWriter incomingWriter = findIterableWriter(parameter, instance, edge.getType(), Relationship.INCOMING);
-				if (incomingWriter!=null) {
+				if (incomingWriter != null) {
 					entityCollector.recordTypeRelationship(edge.getEndNode(), instance, edge.getType(), Relationship.INCOMING);
 					relationshipsToRegister.add(new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), instance.getClass(), ClassUtils.getType(incomingWriter.typeParameterDescriptor())));
-
 				}
-                if (incomingWriter != null || outgoingWriter != null) {
-                    registeredEdges.add(edge) ;
-                }
+				if (incomingWriter != null || outgoingWriter != null) {
+					registeredEdges.add(edge);
+				}
 			}
 		}
 
@@ -448,22 +446,22 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 		for (MappedRelationship mappedRelationship : relationshipsToRegister) {
 			mappingContext.addRelationship(mappedRelationship);
 		}
-        // finally, register anything left over. These will be singleton relationships that
-        // were not mapped during one->one mapping, or one->many mapping.
-        for (Edge edge : oneToManyRelationships) {
-            if (!registeredEdges.contains(edge)) {
-                Object source = mappingContext.getNodeEntity(edge.getStartNode());
-                Object target = mappingContext.getNodeEntity(edge.getEndNode());
-                RelationalWriter writer = EntityAccessManager.getRelationalWriter(metadata.classInfo(source), edge.getType(), Relationship.OUTGOING, target);
-                // ensures its tracked in the domain
-                if (writer != null) {
-                    MappedRelationship mappedRelationship = new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), source.getClass(), ClassUtils.getType(writer.typeParameterDescriptor()));
-                    if (!mappingContext.containsRelationship(mappedRelationship)) {
-                        mappingContext.addRelationship(mappedRelationship);
-                    }
-                }
-            }
-        }
+		// finally, register anything left over. These will be singleton relationships that
+		// were not mapped during one->one mapping, or one->many mapping.
+		for (Edge edge : oneToManyRelationships) {
+			if (!registeredEdges.contains(edge)) {
+				Object source = mappingContext.getNodeEntity(edge.getStartNode());
+				Object target = mappingContext.getNodeEntity(edge.getEndNode());
+				RelationalWriter writer = EntityAccessManager.getRelationalWriter(metadata.classInfo(source), edge.getType(), Relationship.OUTGOING, target);
+				// ensures its tracked in the domain
+				if (writer != null) {
+					MappedRelationship mappedRelationship = new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), source.getClass(), ClassUtils.getType(writer.typeParameterDescriptor()));
+					if (!mappingContext.containsRelationship(mappedRelationship)) {
+						mappingContext.addRelationship(mappedRelationship);
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -538,9 +536,9 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 	 */
 	private boolean nodeTypeMatches(ClassInfo classInfo, Object node, String annotation) {
 		List<FieldInfo> fields = classInfo.findFields(annotation);
-		if(fields.size() == 1) {
+		if (fields.size() == 1) {
 			FieldInfo field = fields.get(0);
-			if(field.isTypeOf(node.getClass())) {
+			if (field.isTypeOf(node.getClass())) {
 				return true;
 			}
 		}
@@ -551,15 +549,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 		FieldInfo fieldInfo = fieldInfoForPropertyName(propertyName, classInfo);
 		Class clazz = null;
 		if (fieldInfo != null) {
-			if (fieldInfo.getTypeDescriptor() != null) {
-				clazz = ClassUtils.getTypeOrNull(fieldInfo.getTypeDescriptor());
-			}
-			if (clazz == null && fieldInfo.getTypeParameterDescriptor() != null) {
-				clazz = ClassUtils.getTypeOrNull(fieldInfo.getTypeParameterDescriptor());
-			}
-			if (clazz == null && fieldInfo.getDescriptor() != null) {
-				clazz = ClassUtils.getTypeOrNull(fieldInfo.getDescriptor());
-			}
+			clazz = ClassUtils.getType(fieldInfo.getTypeDescriptor());
 		}
 		return clazz;
 	}

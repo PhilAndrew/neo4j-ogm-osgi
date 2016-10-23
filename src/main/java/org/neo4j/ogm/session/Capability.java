@@ -12,6 +12,9 @@
  */
 package org.neo4j.ogm.session;
 
+import java.util.Collection;
+import java.util.Map;
+
 import org.neo4j.ogm.cypher.Filter;
 import org.neo4j.ogm.cypher.Filters;
 import org.neo4j.ogm.cypher.query.Pagination;
@@ -19,9 +22,6 @@ import org.neo4j.ogm.cypher.query.SortOrder;
 import org.neo4j.ogm.model.QueryStatistics;
 import org.neo4j.ogm.model.Result;
 import org.neo4j.ogm.transaction.Transaction;
-
-import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Vince Bickers
@@ -105,6 +105,7 @@ public interface Capability {
     interface Delete {
         <T> void delete(T object);
         <T> void deleteAll(Class<T> type);
+        <T> Object delete(Class<T> type, Iterable<Filter> filters, boolean listResults);
         void purgeDatabase();
         void clear();
     }
@@ -222,6 +223,15 @@ public interface Capability {
          * @return The number of entities in the database of the given type
          */
         long countEntitiesOfType(Class<?> entity);
+
+        /**
+         * Counts all the <em>node</em> entities of the specified type which match the filters supplied
+         *
+         * @param clazz The {@link Class} denoting the type of entity to count
+         * @param filters a collection of {@link Filter} objects used as additional parameters to the query
+         * @return The number of entities in the database of the given type matched by the given filters
+         */
+        long count(Class<?> clazz, Iterable<Filter> filters);
 
     }
 

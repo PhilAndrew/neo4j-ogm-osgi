@@ -26,9 +26,6 @@ public class AnnotationInfo {
     private String annotationName;
     private final Map<String, String> elements = new HashMap<>();
 
-    public AnnotationInfo() {
-    }
-
     public AnnotationInfo(final DataInputStream dataInputStream, ConstantPool constantPool) throws IOException {
 
         String annotationFieldDescriptor = constantPool.readString(dataInputStream.readUnsignedShort());

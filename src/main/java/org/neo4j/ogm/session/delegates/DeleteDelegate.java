@@ -13,14 +13,14 @@
 package org.neo4j.ogm.session.delegates;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import org.neo4j.ogm.cypher.Filter;
+import org.neo4j.ogm.cypher.query.CypherQuery;
 import org.neo4j.ogm.cypher.query.DefaultRowModelRequest;
 import org.neo4j.ogm.entity.io.FieldWriter;
 import org.neo4j.ogm.metadata.ClassInfo;
+import org.neo4j.ogm.model.Result;
 import org.neo4j.ogm.model.RowModel;
 import org.neo4j.ogm.request.RowModelRequest;
 import org.neo4j.ogm.request.Statement;
@@ -29,9 +29,9 @@ import org.neo4j.ogm.session.Capability;
 import org.neo4j.ogm.session.Neo4jSession;
 import org.neo4j.ogm.session.event.Event;
 import org.neo4j.ogm.session.event.PersistenceEvent;
-import org.neo4j.ogm.session.request.strategy.DeleteNodeStatements;
-import org.neo4j.ogm.session.request.strategy.DeleteRelationshipStatements;
 import org.neo4j.ogm.session.request.strategy.DeleteStatements;
+import org.neo4j.ogm.session.request.strategy.impl.NodeDeleteStatements;
+import org.neo4j.ogm.session.request.strategy.impl.RelationshipDeleteStatements;
 
 /**
  * @author Vince Bickers
@@ -46,9 +46,9 @@ public class DeleteDelegate implements Capability.Delete {
 
     private DeleteStatements getDeleteStatementsBasedOnType(Class type) {
         if (session.metaData().isRelationshipEntity(type.getName())) {
-            return new DeleteRelationshipStatements();
+            return new RelationshipDeleteStatements();
         }
-        return new DeleteNodeStatements();
+        return new NodeDeleteStatements();
     }
 
 
@@ -141,7 +141,7 @@ public class DeleteDelegate implements Capability.Delete {
     public <T> void deleteAll(Class<T> type) {
         ClassInfo classInfo = session.metaData().classInfo(type.getName());
         if (classInfo != null) {
-            Statement request = getDeleteStatementsBasedOnType(type).deleteByType(session.entityType(classInfo.name()));
+            Statement request = getDeleteStatementsBasedOnType(type).delete(session.entityType(classInfo.name()));
             RowModelRequest query = new DefaultRowModelRequest(request.getStatement(), request.getParameters());
             session.notifyListeners(new PersistenceEvent(type, Event.TYPE.PRE_DELETE));
             try (Response<RowModel> response = session.requestHandler().execute(query)) {
@@ -155,10 +155,112 @@ public class DeleteDelegate implements Capability.Delete {
         }
     }
 
+    @Override
+    public <T> Object delete(Class<T> clazz, Iterable<Filter> filters, boolean listResults) {
+
+        ClassInfo classInfo = session.metaData().classInfo(clazz.getSimpleName());
+
+        if (classInfo != null) {
+
+            session.resolvePropertyAnnotations(clazz, filters);
+
+            CypherQuery query;
+
+            if (classInfo.isRelationshipEntity()) {
+                query = new RelationshipDeleteStatements().deleteAndList(classInfo.neo4jName(), filters);
+            } else {
+                query = new NodeDeleteStatements().deleteAndList(classInfo.neo4jName(), filters);
+            }
+
+            if (listResults) {
+                return list(query, classInfo.isRelationshipEntity());
+            }
+            return count(query, classInfo.isRelationshipEntity());
+        }
+
+        throw new RuntimeException(clazz.getName() + " is not a persistable class");
+    }
+
+    /**
+     * Executes a delete query in which objects of a specific type will be deleted according to some filter criteria,
+     * invoking post-delete housekeeping after the query completes, and returning a list of deleted objects to the caller.
+     *
+     * @param query the CypherQuery that will delete objects according to some filter criteria
+     * @param isRelationshipEntity whether the objects being deleted are relationship entities
+     * @return a {@link List} of object ids that were deleted
+     */
+    private List<Long> list(CypherQuery query, boolean isRelationshipEntity) {
+        String resultKey = isRelationshipEntity ? "ID(r)" : "ID(n)";
+        Result result = session.query(query.getStatement(), query.getParameters());
+        List<Long> ids = new ArrayList();
+        for (Map<String, Object> resultEntry : result) {
+            Long deletedObjectId = Long.parseLong(resultEntry.get(resultKey).toString());
+            postDelete(deletedObjectId, isRelationshipEntity);
+            ids.add(deletedObjectId);
+        }
+        return ids;
+    }
+
+    /**
+     * Executes a delete query in which objects of a specific type will be deleted according to some filter criteria,
+     * invoking post-delete housekeeping after the query completes, and returning a count of deleted objects to the caller.
+     *
+     * @param query the CypherQuery that will delete objects according to some filter criteria
+     * @param isRelationshipEntity whether the objects being deleted are relationship entities
+     * @return a count of objects that were deleted
+     */
+    private Long count(CypherQuery query, boolean isRelationshipEntity) {
+        String resultKey = isRelationshipEntity ? "ID(r)" : "ID(n)";
+        Result result = session.query(query.getStatement(), query.getParameters());
+        long count = 0;
+        for (Map<String, Object> resultEntry : result) {
+            Long deletedObjectId = Long.parseLong(resultEntry.get(resultKey).toString());
+            postDelete(deletedObjectId, isRelationshipEntity);
+            count++;
+        }
+        return count;
+    }
+
+    /**
+     * Handles the post-delete phase of a delete query in which objects have been
+     * deleted according to some filter criteria.
+     *
+     * In this scenario, we don't necessarily have references to all the deleted
+     * objects in the mapping context, so we can only handle the ones we know about.
+     *
+     * The two tasks to be done here are to remove the object from the mapping
+     * context if we're holding a reference to it, and to raise a POST_DELETE event
+     * for every such object found.
+     *
+     * Note that is not possible to raise a PRE_DELETE event because we don't
+     * know beforehand which objects will be deleted by the query.
+     *
+     * @param identity the id of the object that was deleted
+     * @param isRelationshipEntity true if it was an edge that was deleted
+     */
+    private void postDelete(Long identity, boolean isRelationshipEntity) {
+
+        Object object;
+
+        if (isRelationshipEntity) {
+            object = session.context().getRelationshipEntity(identity);
+            if (object != null) {
+                session.detachRelationshipEntity(identity);
+            }
+        } else {
+            object = session.context().getNodeEntity(identity);
+            if (object != null) {
+                session.detachNodeEntity(identity);
+            }
+        }
+        if (session.eventsEnabled() && object != null) {
+            session.notifyListeners(new PersistenceEvent(object, Event.TYPE.POST_DELETE));
+        }
+    }
 
     @Override
     public void purgeDatabase() {
-        Statement stmt = new DeleteNodeStatements().purge();
+        Statement stmt = new NodeDeleteStatements().deleteAll();
         RowModelRequest query = new DefaultRowModelRequest(stmt.getStatement(), stmt.getParameters());
         session.requestHandler().execute(query).close();
         session.context().clear();

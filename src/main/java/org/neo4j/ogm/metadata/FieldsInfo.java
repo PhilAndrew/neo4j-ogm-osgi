@@ -30,10 +30,6 @@ public class FieldsInfo {
 
     private final Map<String, FieldInfo> fields = new HashMap<>();
 
-    public Map<String, FieldInfo> getFieldsHashMap() {
-        return fields;
-    }
-
     FieldsInfo() {
     }
 
@@ -90,7 +86,6 @@ public class FieldsInfo {
     public FieldInfo get(String name) {
         return fields.get(name);
     }
-    public void set(String name, FieldInfo v) { fields.put(name, v); }
 
     public void append(FieldsInfo fieldsInfo) {
         for (FieldInfo fieldInfo : fieldsInfo.fields()) {

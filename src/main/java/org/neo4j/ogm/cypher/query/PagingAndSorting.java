@@ -10,28 +10,14 @@
  * code for these subcomponents is subject to the terms and
  *  conditions of the subcomponent's license, as noted in the LICENSE file.
  */
-
-package org.neo4j.ogm.cypher.function;
-
-import org.neo4j.ogm.cypher.Filter;
-
-import java.util.Map;
+package org.neo4j.ogm.cypher.query;
 
 /**
- * @author Jasper Blues
+ * @author Vince Bickers
  */
-public interface FilterFunction<T> {
+public interface PagingAndSorting {
 
-    Filter getFilter();
-
-    void setFilter(Filter filter);
-
-    T getValue();
-
-    void setValue(T value);
-
-    String expression(String nodeIdentifier);
-
-    Map<String, Object> parameters();
+    PagingAndSortingQuery setPagination(Pagination page);
+    PagingAndSortingQuery setSortOrder(SortOrder sortOrder);
 
 }

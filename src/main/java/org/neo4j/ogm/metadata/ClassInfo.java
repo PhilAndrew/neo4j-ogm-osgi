@@ -17,30 +17,16 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.neo4j.ogm.annotation.*;
 import org.neo4j.ogm.utils.ClassUtils;
-import org.neo4j.ogm.annotation.GraphId;
-import org.neo4j.ogm.annotation.NodeEntity;
-import org.neo4j.ogm.annotation.Property;
-import org.neo4j.ogm.annotation.Relationship;
-import org.neo4j.ogm.annotation.RelationshipEntity;
-import org.neo4j.ogm.annotation.Transient;
-import org.neo4j.ogm.annotation.Labels;
 import org.neo4j.ogm.classloader.MetaDataClassLoader;
 import org.neo4j.ogm.exception.MappingException;
 import org.slf4j.Logger;
@@ -99,110 +85,6 @@ public class ClassInfo {
     private volatile FieldInfo identityField = null;
     private volatile FieldInfo labelField = null;
     private volatile boolean labelFieldMapped = false;
-
-    static String getDescriptorForClass(final Class c)
-    {
-        if(c.isPrimitive())
-        {
-            if(c==byte.class)
-                return "B";
-            if(c==char.class)
-                return "C";
-            if(c==double.class)
-                return "D";
-            if(c==float.class)
-                return "F";
-            if(c==int.class)
-                return "I";
-            if(c==long.class)
-                return "J";
-            if(c==short.class)
-                return "S";
-            if(c==boolean.class)
-                return "Z";
-            if(c==void.class)
-                return "V";
-            throw new RuntimeException("Unrecognized primitive "+c);
-        }
-        if(c.isArray()) return c.getName().replace('.', '/');
-        return ('L'+c.getName()+';').replace('.', '/');
-    }
-
-    public ClassInfo(Class<?> c) {
-        int m = c.getModifiers();
-        isInterface = Modifier.isInterface( m ); // c.isInterface();
-        isAbstract = Modifier.isAbstract( m ); // c.isAbstract();
-        isEnum = c.isEnum();
-
-        className = c.getName();
-
-        Annotation[] ann = c.getAnnotations();
-        for (Annotation annotation : ann) {
-            AnnotationInfo a = null;
-            a = new AnnotationInfo();
-            a.setName(annotation.annotationType().getName());
-            annotationsInfo.add(a);
-        }
-
-        Field[] fields = c.getDeclaredFields();
-        for (Field field : fields) {
-            ObjectAnnotations annotations = new ObjectAnnotations();
-            Annotation[] annField = field.getAnnotations();
-            Boolean isGraphId = false;
-            for (Annotation annotation : annField) {
-                annotations.setName(annotation.annotationType().getName());
-                if (annotation.annotationType().getName().equals("org.neo4j.ogm.annotation.GraphId")) {
-                    isGraphId = true;
-                }
-            }
-            FieldInfo fieldInfo = new FieldInfo(field.getName(), getDescriptorForClass(field.getType()), null, annotations);
-            if (isGraphId) identityField = fieldInfo;
-
-            fieldsInfo.set(fieldInfo.getName(), fieldInfo);
-        }
-
-        Method[] methods = c.getDeclaredMethods();
-
-        // Set direct super class
-        if (c.getSuperclass()!=null) {
-            if ((c.getSuperclass()!=null) && (c.getSuperclass().getName().equals("java.lang.Object")==false)) {
-                directSuperclass = new ClassInfo(c.getSuperclass());
-                directSuperclassName = c.getName();
-
-                directSuperclass.copyFieldsAndAnnotatonsTo(fieldsInfo, fieldInfos, annotationsInfo);
-            }
-        }
-
-        // Set interfaces
-        Class[] interfaces = c.getInterfaces();
-        if ((interfaces!=null) && (interfaces.length > 0)) {
-            for (Class i : interfaces) {
-                interfacesInfo.add(new InterfaceInfo(i.getName()));
-            }
-        }
-
-        new ClassValidator(this).validate();
-    }
-
-    private void copyFieldsAndAnnotatonsTo(FieldsInfo f, Set<FieldInfo> f2, AnnotationsInfo a) {
-        try {
-            f.getFieldsHashMap().putAll(fieldsInfo.getFieldsHashMap());
-            if (fieldInfos!=null) {
-                for (FieldInfo fInfo : fieldInfos) {
-                    f2.add(fInfo);
-                }
-            }
-            if ((annotationsInfo!=null) && (annotationsInfo.list()!=null)) {
-                for (AnnotationInfo annotationInfo : annotationsInfo.list()) {
-                    a.add(annotationInfo);
-                }
-            }
-        } catch (RuntimeException ex) {
-            ex.printStackTrace();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
 
     // todo move this to a factory class
     public ClassInfo(InputStream inputStream) throws IOException {
@@ -276,9 +158,7 @@ public class ClassInfo {
     }
 
     void extend(ClassInfo classInfo) {
-        //this.interfaces.addAll(classInfo.interfaces());
         this.interfacesInfo.append(classInfo.interfacesInfo());
-
         this.fieldsInfo.append(classInfo.fieldsInfo());
         this.methodsInfo.append(classInfo.methodsInfo());
     }
@@ -442,7 +322,7 @@ public class ClassInfo {
                 for (FieldInfo fieldInfo : fieldsInfo().fields()) {
                     AnnotationInfo annotationInfo = fieldInfo.getAnnotations().get(GraphId.CLASS);
                     if (annotationInfo != null) {
-                        if (fieldInfo.getDescriptor().equals("Ljava/lang/Long;")) {
+                        if (fieldInfo.getTypeDescriptor().equals("Ljava/lang/Long;")) {
                             identityField = fieldInfo;
                             return fieldInfo;
                         }
@@ -450,7 +330,7 @@ public class ClassInfo {
                 }
                 FieldInfo fieldInfo = fieldsInfo().get("id");
                 if (fieldInfo != null) {
-                    if (fieldInfo.getDescriptor().equals("Ljava/lang/Long;")) {
+                    if (fieldInfo.getTypeDescriptor().equals("Ljava/lang/Long;")) {
                         identityField = fieldInfo;
                         return fieldInfo;
                     }
@@ -478,7 +358,7 @@ public class ClassInfo {
             if (!labelFieldMapped) {
                 for (FieldInfo fieldInfo : fieldsInfo().fields()) {
                     if (fieldInfo.isLabelField()) {
-                        if (!fieldInfo.isCollection()) {
+                        if (!fieldInfo.isIterable()) {
                             throw new MappingException(String.format(
                                     "Field '%s' in class '%s' includes the @Labels annotation, however this field is not a " +
                                             "type of collection.", fieldInfo.getName(), this.name()));
@@ -523,7 +403,7 @@ public class ClassInfo {
                         if (fieldInfo != identityField && !fieldInfo.isLabelField()) {
                             AnnotationInfo annotationInfo = fieldInfo.getAnnotations().get(Property.CLASS);
                             if (annotationInfo == null) {
-                                if (fieldInfo.isSimple()) {
+                                if (fieldInfo.persistableAsProperty()) {
                                     fieldInfos.add(fieldInfo);
                                 }
                             } else {
@@ -596,7 +476,7 @@ public class ClassInfo {
             if (fieldInfo != identityField) {
                 AnnotationInfo annotationInfo = fieldInfo.getAnnotations().get(Relationship.CLASS);
                 if (annotationInfo == null) {
-                    if (!fieldInfo.isSimple()) {
+                    if (!fieldInfo.persistableAsProperty()) {
                         fieldInfos.add(fieldInfo);
                     }
                 } else {
@@ -690,14 +570,14 @@ public class ClassInfo {
         for (MethodInfo methodInfo : methodsInfo().getters()) {
             AnnotationInfo annotationInfo = methodInfo.getAnnotations().get(GraphId.CLASS);
             if (annotationInfo != null) {
-                if (methodInfo.getDescriptor().equals("()Ljava/lang/Long;")) {
+                if (methodInfo.getTypeDescriptor().equals("()Ljava/lang/Long;")) {
                     return methodInfo;
                 }
             }
         }
         MethodInfo methodInfo = methodsInfo().get("getId");
         if (methodInfo != null) {
-            if (methodInfo.getDescriptor().equals("()Ljava/lang/Long;")) {
+            if (methodInfo.getTypeDescriptor().equals("()Ljava/lang/Long;")) {
                 return methodInfo;
             }
         }
@@ -714,14 +594,14 @@ public class ClassInfo {
         for (MethodInfo methodInfo : methodsInfo().setters()) {
             AnnotationInfo annotationInfo = methodInfo.getAnnotations().get(GraphId.CLASS);
             if (annotationInfo != null) {
-                if (methodInfo.getDescriptor().equals("(Ljava/lang/Long;)V")) {
+                if (methodInfo.getTypeDescriptor().equals("(Ljava/lang/Long;)V")) {
                     return methodInfo;
                 }
             }
         }
         MethodInfo methodInfo = methodsInfo().get("setId");
         if (methodInfo != null) {
-            if (methodInfo.getDescriptor().equals("(Ljava/lang/Long;)V")) {
+            if (methodInfo.getTypeDescriptor().equals("(Ljava/lang/Long;)V")) {
                 return methodInfo;
             }
         }
@@ -978,14 +858,14 @@ public class ClassInfo {
 
     }
 
-
-    @SuppressWarnings("unchecked")
-    public Method getMethod(MethodInfo methodInfo, Class... parameterTypes) {
-        try {
-            return MetaDataClassLoader.loadClass(name()).getMethod(methodInfo.getName(), parameterTypes);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    /**
+     * Returns the Method corresponding to the supplied MethodInfo as declared by the class represented by this ClassInfo
+     *
+     * @param methodInfo the MethodInfo used to obtain the Method
+     * @return a Method
+     */
+    public Method getMethod(MethodInfo methodInfo) {
+        return methodInfo.getMethod(name());
     }
 
     /**
@@ -998,8 +878,11 @@ public class ClassInfo {
         String setterSignature = "(L" + parameterType.getName().replace(".", "/") + ";)V";
         List<MethodInfo> methodInfos = new ArrayList<>();
         for (MethodInfo methodInfo : methodsInfo().methods()) {
-            if (methodInfo.getDescriptor().equals(setterSignature)) {
-                methodInfos.add(methodInfo);
+            // TODO: don't admit non-javaBean style setters
+            if (methodInfo.isSetter()) {
+                if (methodInfo.getTypeDescriptor().equals(setterSignature)) {
+                    methodInfos.add(methodInfo);
+                }
             }
         }
         return methodInfos;
@@ -1015,8 +898,11 @@ public class ClassInfo {
         String setterSignature = "()L" + returnType.getName().replace(".", "/") + ";";
         List<MethodInfo> methodInfos = new ArrayList<>();
         for (MethodInfo methodInfo : methodsInfo().methods()) {
-            if (methodInfo.getDescriptor().equals(setterSignature)) {
-                methodInfos.add(methodInfo);
+            // TODO: don't admit non-javaBean style getters
+            if (methodInfo.isGetter()) {
+                if (methodInfo.getTypeDescriptor().equals(setterSignature)) {
+                    methodInfos.add(methodInfo);
+                }
             }
         }
         return methodInfos;
@@ -1032,7 +918,7 @@ public class ClassInfo {
         String fieldSignature = "L" + fieldType.getName().replace(".", "/") + ";";
         List<FieldInfo> fieldInfos = new ArrayList<>();
         for (FieldInfo fieldInfo : fieldsInfo().fields()) {
-            if (fieldInfo.getDescriptor().equals(fieldSignature)) {
+            if (fieldInfo.getTypeDescriptor().equals(fieldSignature)) {
                 fieldInfos.add(fieldInfo);
             }
         }
@@ -1092,11 +978,11 @@ public class ClassInfo {
         String arrayOfTypeSignature = "[" + typeSignature;
         try {
             for (FieldInfo fieldInfo : fieldsInfo().fields()) {
-                if (fieldInfo.getTypeParameterDescriptor() != null) {
-                    if (fieldInfo.getTypeParameterDescriptor().equals(typeSignature) || fieldInfo.isParameterisedTypeOf(iteratedType)) {
-                        fieldInfos.add(fieldInfo);
-                    }
-                } else if (fieldInfo.getDescriptor().equals(arrayOfTypeSignature) || fieldInfo.isParameterisedTypeOf(iteratedType)) {
+                String fieldType = fieldInfo.getTypeDescriptor();
+                if (fieldInfo.isArray() && (fieldType.equals(arrayOfTypeSignature) || fieldInfo.isParameterisedTypeOf(iteratedType))) {
+                    fieldInfos.add(fieldInfo);
+                }
+                else if (fieldInfo.isIterable() && (fieldType.equals(typeSignature) || fieldInfo.isParameterisedTypeOf(iteratedType))) {
                     fieldInfos.add(fieldInfo);
                 }
             }
@@ -1149,26 +1035,20 @@ public class ClassInfo {
         String arrayOfTypeSignature = "([" + typeSignature + ")V";
         try {
             for (MethodInfo methodInfo : propertySetters()) {
-                if (methodInfo.getTypeParameterDescriptor() != null) {
-                    if (methodInfo.getTypeParameterDescriptor().equals(typeSignature) || methodInfo.isParameterisedTypeOf(iteratedType)) {
-                        methodInfos.add(methodInfo);
-                    }
-                } else {
-                    if (methodInfo.getDescriptor().equals(arrayOfTypeSignature) || methodInfo.isParameterisedTypeOf(iteratedType)) {
-                        methodInfos.add(methodInfo);
-                    }
+                String methodType = methodInfo.getTypeDescriptor();
+                if (methodInfo.isArray() && (methodType.equals(arrayOfTypeSignature) || methodInfo.isParameterisedTypeOf(iteratedType))) {
+                    methodInfos.add(methodInfo);
+                } else if (methodInfo.isIterable() && (methodType.equals(typeSignature) || methodInfo.isParameterisedTypeOf(iteratedType))) {
+                    methodInfos.add(methodInfo);
                 }
             }
-
             for (MethodInfo methodInfo : relationshipSetters()) {
-                if (methodInfo.getTypeParameterDescriptor() != null) {
-                    if (methodInfo.getTypeParameterDescriptor().equals(typeSignature) || methodInfo.isParameterisedTypeOf(iteratedType)) {
-                        methodInfos.add(methodInfo);
-                    } else {
-                        if (methodInfo.getDescriptor().equals(arrayOfTypeSignature) || methodInfo.isParameterisedTypeOf(iteratedType)) {
-                            methodInfos.add(methodInfo);
-                        }
-                    }
+                String methodType = methodInfo.getTypeDescriptor();
+                if (methodInfo.isArray() && (methodType.equals(arrayOfTypeSignature) || methodInfo.isParameterisedTypeOf(iteratedType))) {
+                    methodInfos.add(methodInfo);
+                }
+                else if (methodInfo.isIterable() && (methodType.equals(typeSignature) || methodInfo.isParameterisedTypeOf(iteratedType))) {
+                    methodInfos.add(methodInfo);
                 }
             }
             iterableSettersForType.put(iteratedType, methodInfos);
@@ -1221,26 +1101,22 @@ public class ClassInfo {
         String arrayOfTypeSignature = "()[" + typeSignature;
         try {
             for (MethodInfo methodInfo : propertyGetters()) {
-                if (methodInfo.getTypeParameterDescriptor() != null) {
-                    if (methodInfo.getTypeParameterDescriptor().equals(typeSignature)) {
-                        methodInfos.add(methodInfo);
-                    }
-                } else {
-                    if (methodInfo.getDescriptor().equals(arrayOfTypeSignature)) {
-                        methodInfos.add(methodInfo);
-                    }
+                String methodType = methodInfo.getTypeDescriptor();
+                if (methodInfo.isArray() && methodType.equals(arrayOfTypeSignature)) {
+                    methodInfos.add(methodInfo);
+                }
+                else if (methodInfo.isIterable() && methodType.equals(typeSignature)) {
+                    methodInfos.add(methodInfo);
                 }
             }
 
             for (MethodInfo methodInfo : relationshipGetters()) {
-                if (methodInfo.getTypeParameterDescriptor() != null) {
-                    if (methodInfo.getTypeParameterDescriptor().equals(typeSignature)) {
-                        methodInfos.add(methodInfo);
-                    } else {
-                        if (methodInfo.getDescriptor().equals(arrayOfTypeSignature)) {
-                            methodInfos.add(methodInfo);
-                        }
-                    }
+                String methodType = methodInfo.getTypeDescriptor();
+                if (methodInfo.isArray() && methodType.equals(arrayOfTypeSignature)) {
+                    methodInfos.add(methodInfo);
+                }
+                else if (methodInfo.isIterable() && methodType.equals(typeSignature)) {
+                    methodInfos.add(methodInfo);
                 }
             }
             iterableGettersForType.put(iteratedType, methodInfos);
@@ -1368,8 +1244,60 @@ public class ClassInfo {
             LOGGER.debug("Could not get {} class type for relationshipType {} and relationshipDirection {} ", className, relationshipType, relationshipDirection);
         }
         return null;
+	}
 
+	/**
+	 * @return If this class contains any fields/properties annotated with @Index.
+	 */
+	public boolean containsIndexes() {
+		return !getIndexFields().isEmpty();
     }
 
+	/**
+	 * @return The <code>FieldInfo</code>s representing the Indexed fields in this class.
+	 */
+	public Collection<FieldInfo> getIndexFields() {
+		if (indexFields == null) {
+			try {
+				lock.lock();
+				if (indexFields == null) {
+					indexFields = addIndexes();
+				}
+			} finally {
+				lock.unlock();
+			}
+		}
+		return indexFields.values();
+	}
+
+	private Map<String, FieldInfo> addIndexes() {
+		Map<String, FieldInfo> indexes = new HashMap<>();
+
+		// No way to get declared fields from current byte code impl. Using reflection instead.
+		List<Field> declaredFields;
+		try {
+			declaredFields = Arrays.asList(Class.forName(className).getDeclaredFields());
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+
+		for (FieldInfo fieldInfo : fieldsInfo().fields()) {
+
+			if (isDeclaredField(declaredFields, fieldInfo.getName()) && fieldInfo.hasAnnotation(Index.class.getCanonicalName())) {
+				indexes.put(fieldInfo.property(), fieldInfo);
+			}
+		}
+		return indexes;
+	}
+
+	private boolean isDeclaredField(List<Field> declaredFields, String name) {
+
+		for (Field field : declaredFields) {
+			if (field.getName().equals(name)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }
 
