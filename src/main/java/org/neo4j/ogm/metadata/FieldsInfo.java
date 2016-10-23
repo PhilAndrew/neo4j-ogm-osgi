@@ -33,6 +33,10 @@ public class FieldsInfo {
     FieldsInfo() {
     }
 
+    public Map<String, FieldInfo> getFieldsHashMap() {
+        return fields;
+    }
+
     public FieldsInfo(DataInputStream dataInputStream, ConstantPool constantPool) throws IOException {
         // get the field information for this class
         int fieldCount = dataInputStream.readUnsignedShort();
@@ -94,4 +98,5 @@ public class FieldsInfo {
             }
         }
     }
+    public void set(String name, FieldInfo v) { fields.put(name, v); }
 }

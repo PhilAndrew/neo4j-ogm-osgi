@@ -17,12 +17,24 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.neo4j.ogm.Neo4JOGM;
+import org.neo4j.ogm.Neo4JOSGI;
+import org.neo4j.ogm.annotation.GraphId;
+import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Property;
+import org.neo4j.ogm.annotation.Relationship;
+import org.neo4j.ogm.annotation.RelationshipEntity;
+import org.neo4j.ogm.annotation.Transient;
+import org.neo4j.ogm.annotation.Labels;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.neo4j.ogm.annotation.*;
@@ -85,6 +97,67 @@ public class ClassInfo {
     private volatile FieldInfo identityField = null;
     private volatile FieldInfo labelField = null;
     private volatile boolean labelFieldMapped = false;
+
+    // Constructor for OSGi
+    public ClassInfo(Class<?> c) {
+        int m = c.getModifiers();
+        isInterface = Modifier.isInterface( m ); // c.isInterface();
+        isAbstract = Modifier.isAbstract( m ); // c.isAbstract();
+        isEnum = c.isEnum();
+
+        className = c.getName();
+
+        Annotation[] ann = c.getAnnotations();
+        for (Annotation annotation : ann) {
+            AnnotationInfo a = null;
+            a = new AnnotationInfo();
+            a.setName(annotation.annotationType().getName());
+            annotationsInfo.add(a);
+        }
+
+        Field[] fields = c.getDeclaredFields();
+        for (Field field : fields) {
+            ObjectAnnotations annotations = new ObjectAnnotations();
+            Annotation[] annField = field.getAnnotations();
+            Boolean isGraphId = false;
+            for (Annotation annotation : annField) {
+                annotations.setName(annotation.annotationType().getName());
+                if (annotation.annotationType().getName().equals("org.neo4j.ogm.annotation.GraphId")) {
+                    isGraphId = true;
+                }
+            }
+            FieldInfo fieldInfo = new FieldInfo(field.getName(), Neo4JOSGI.getDescriptorForClass(field.getType()), null, annotations);
+            if (isGraphId) identityField = fieldInfo;
+
+            fieldsInfo.set(fieldInfo.getName(), fieldInfo);
+        }
+
+        Method[] methods = c.getDeclaredMethods();
+
+        // Set direct super class
+        if (c.getSuperclass()!=null) {
+            if ((c.getSuperclass()!=null) && (c.getSuperclass().getName().equals("java.lang.Object")==false)) {
+                directSuperclass = new ClassInfo(c.getSuperclass());
+                directSuperclassName = c.getName();
+
+                directSuperclass.copyFieldsAndAnnotatonsTo(fieldsInfo, fieldInfos, annotationsInfo);
+            }
+        }
+
+        // Set interfaces
+        Class[] interfaces = c.getInterfaces();
+        if ((interfaces!=null) && (interfaces.length > 0)) {
+            for (Class i : interfaces) {
+                interfacesInfo.add(new InterfaceInfo(i.getName()));
+            }
+        }
+
+        new ClassValidator(this).validate();
+    }
+
+    private void copyFieldsAndAnnotatonsTo(FieldsInfo f, Set<FieldInfo> f2, AnnotationsInfo a) {
+        Neo4JOSGI.copyFieldsAndAnnotatonsTo(fieldsInfo, fieldInfos, annotationsInfo, f, f2, a);
+    }
 
     // todo move this to a factory class
     public ClassInfo(InputStream inputStream) throws IOException {

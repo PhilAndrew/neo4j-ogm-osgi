@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.neo4j.ogm.Neo4JOGM;
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.utils.ClassUtils;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
 import org.neo4j.ogm.exception.MappingException;
@@ -33,6 +35,7 @@ import org.neo4j.ogm.typeconversion.ConversionCallback;
 import org.neo4j.ogm.typeconversion.ConversionCallbackRegistry;
 import org.neo4j.ogm.typeconversion.ConvertibleTypes;
 import org.neo4j.ogm.typeconversion.ProxyAttributeConverter;
+import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -339,18 +342,9 @@ public class DomainInfo implements ClassFileProcessor {
         return null;
     }
 
+
     private ClassInfo getClassInfo(String fullOrPartialClassName, Map<String, ClassInfo> infos) {
-        ClassInfo match = null;
-        for (String fqn : infos.keySet()) {
-            if (fqn.endsWith("." + fullOrPartialClassName) || fqn.equals(fullOrPartialClassName)) {
-                if (match == null) {
-                    match = infos.get(fqn);
-                } else {
-                    throw new MappingException("More than one class has simple name: " + fullOrPartialClassName);
-                }
-            }
-        }
-        return match;
+        return Neo4JOSGI.getClassInfo(fullOrPartialClassName, infos);
     }
 
     public List<ClassInfo> getClassInfosWithAnnotation(String annotation) {

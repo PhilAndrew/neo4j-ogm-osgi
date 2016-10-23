@@ -23,6 +23,10 @@ import java.util.Map;
  */
 public class AnnotationInfo {
 
+
+    public AnnotationInfo() {
+    }
+
     private String annotationName;
     private final Map<String, String> elements = new HashMap<>();
 

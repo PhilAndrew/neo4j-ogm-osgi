@@ -59,7 +59,7 @@ public class AnnotationsInfo {
         return classAnnotations.get(annotationName);
     }
 
-    void add(AnnotationInfo annotationInfo) {
+    public void add(AnnotationInfo annotationInfo) {
         classAnnotations.put(annotationInfo.getName(), annotationInfo);
     }
 
