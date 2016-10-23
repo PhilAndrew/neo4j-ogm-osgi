@@ -2,6 +2,7 @@ package org.neo4j.ogm;
 
 import org.neo4j.ogm.exception.MappingException;
 import org.neo4j.ogm.metadata.*;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import java.lang.annotation.Annotation;
@@ -100,4 +101,30 @@ public class Neo4JOSGI {
         }
     }
 
+    public static Class loadClass(ClassLoader classLoader, final String name) throws ClassNotFoundException {
+        if (Neo4JOGM.getContextList().size() == 0) {
+            return Class.forName(name, false, classLoader);
+        } else {
+            // Using the OSGi classloader and searching through the loaded bundles
+            Class foundClass = null;
+            java.util.List<BundleContext> contextList = Neo4JOGM.getContextList();
+
+            start:
+            for (BundleContext bundleContext : contextList) {
+                Bundle[] bundles = bundleContext.getBundles();
+                for (Bundle bundle : bundles) {
+                    try {
+                        Class c = bundle.loadClass(name);
+                        if (c != null) {
+                            foundClass = c;
+                            break start;
+                        }
+                    } catch (java.lang.ClassNotFoundException ex) {
+                    }
+                }
+            }
+
+            return foundClass;
+        }
+    }
 }
