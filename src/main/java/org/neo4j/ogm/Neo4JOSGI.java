@@ -29,26 +29,34 @@ public class Neo4JOSGI {
             }
             return match;
         } else {
+            // @todo PHILIP THIS IS A BAD HACK!!!!!!!!!!!!!!!!!
+            if (!fullOrPartialClassName.contains("."))
+                fullOrPartialClassName = "universe.microservice.userinterface.model." + fullOrPartialClassName;
+
             ClassInfo info = null;
             // We just want to return simple class information
-            try {
-                List<BundleContext> listOf = Neo4JOGM.getContextList();
-                Class<?> classFound = null;
-                breakOut:
-                for (BundleContext bundleContext : listOf) {
-                    //
+
+            List<BundleContext> listOf = Neo4JOGM.getContextList();
+            Class<?> classFound = null;
+            breakOut:
+            for (BundleContext bundleContext : listOf) {
+                //
+                try {
                     Class<?> ccc = bundleContext.getBundle().loadClass(fullOrPartialClassName);
                     if (ccc != null) {
                         classFound = ccc;
                         break breakOut;
                     }
+                } catch (ClassNotFoundException e) {
+                    //e.printStackTrace();
+                    System.out.println("Class not found but that should be ok");
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                info = new ClassInfo(classFound);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+            System.out.println("Class found for :" + fullOrPartialClassName + " as " + classFound);
+            info = new ClassInfo(classFound);
+
             return info;
         }
     }
