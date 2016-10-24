@@ -15,6 +15,8 @@ import java.util.Set;
 
 public class Neo4JOSGI {
 
+    public static String modelPackagePath = null;
+
     public static ClassInfo getClassInfo(String fullOrPartialClassName, Map<String, ClassInfo> infos) {
         if (Neo4JOGM.getContextList().size() == 0) {
             ClassInfo match = null;
@@ -30,8 +32,8 @@ public class Neo4JOSGI {
             return match;
         } else {
             // @todo PHILIP THIS IS A BAD HACK!!!!!!!!!!!!!!!!!
-            if (!fullOrPartialClassName.contains("."))
-                fullOrPartialClassName = "universe.microservice.userinterface.model." + fullOrPartialClassName;
+            if ((modelPackagePath!=null) && (!fullOrPartialClassName.contains(".")))
+                fullOrPartialClassName = modelPackagePath + "." + fullOrPartialClassName;
 
             ClassInfo info = null;
             // We just want to return simple class information
