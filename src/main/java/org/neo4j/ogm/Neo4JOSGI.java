@@ -32,7 +32,7 @@ public class Neo4JOSGI {
             return match;
         } else {
             // @todo PHILIP THIS IS A BAD HACK!!!!!!!!!!!!!!!!!
-            if ((modelPackagePath!=null) && (!fullOrPartialClassName.contains(".")))
+            if (modelPackagePath!=null)
                 fullOrPartialClassName = modelPackagePath + "." + fullOrPartialClassName;
 
             ClassInfo info = null;
@@ -63,12 +63,12 @@ public class Neo4JOSGI {
 
                 } catch (ClassNotFoundException e) {
                     //e.printStackTrace();
-                    System.out.println("Class not found but that should be ok");
+                    //System.out.println("Class not found but that should be ok");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            System.out.println("Class found for :" + fullOrPartialClassName + " as " + classFound);
+            //System.out.println("Class found for :" + fullOrPartialClassName + " as " + classFound);
             info = new ClassInfo(classFound);
 
             return info;
