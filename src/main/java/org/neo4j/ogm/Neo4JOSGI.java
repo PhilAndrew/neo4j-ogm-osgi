@@ -46,9 +46,21 @@ public class Neo4JOSGI {
                 try {
                     Class<?> ccc = bundleContext.getBundle().loadClass(fullOrPartialClassName);
                     if (ccc != null) {
+                        //System.out.println("Class found in normal bundle context for : " + bundleContext.getBundle().getLocation());
                         classFound = ccc;
                         break breakOut;
                     }
+
+                    Bundle[] bundles = bundleContext.getBundles();
+                    for (Bundle bundle : bundles) {
+                        Class<?> c = bundle.loadClass(fullOrPartialClassName);
+                        if (c != null) {
+                            //System.out.println("Bundle where class is found is : " + bundle.getLocation());
+                            classFound = c;
+                            break breakOut;
+                        }
+                    }
+
                 } catch (ClassNotFoundException e) {
                     //e.printStackTrace();
                     System.out.println("Class not found but that should be ok");
