@@ -32,7 +32,7 @@ public class Neo4JOSGI {
             return match;
         } else {
             // @todo PHILIP THIS IS A BAD HACK!!!!!!!!!!!!!!!!!
-            if (modelPackagePath!=null)
+            if ((modelPackagePath!=null) && (!fullOrPartialClassName.contains(".")))
                 fullOrPartialClassName = modelPackagePath + "." + fullOrPartialClassName;
 
             ClassInfo info = null;
