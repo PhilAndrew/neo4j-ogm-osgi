@@ -16,7 +16,10 @@ public class Neo4JOGM {
     public static java.util.Set<org.osgi.framework.BundleContext> _contextSet = null;
 
     public static java.util.List<BundleContext> getContextList() {
-        return new ArrayList<>(_contextSet);
+        if (_contextSet==null)
+            return new ArrayList<>();
+        else
+            return new ArrayList<>(_contextSet);
     }
 
     public static void setBundleContext(BundleContext c) {

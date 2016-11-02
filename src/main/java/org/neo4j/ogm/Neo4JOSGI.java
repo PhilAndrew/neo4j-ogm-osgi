@@ -17,8 +17,20 @@ public class Neo4JOSGI {
 
     public static String modelPackagePath = null;
 
-    public static ClassInfo getClassInfo(String fullOrPartialClassName, Map<String, ClassInfo> infos) {
+    public static ClassInfo getClassInfo(String fullOrPartialClassName, Boolean queryForARealClass, Map<String, ClassInfo> infos) {
+        if ((modelPackagePath!=null) && (!queryForARealClass))
+            fullOrPartialClassName = modelPackagePath + "." + fullOrPartialClassName;
+
         if (Neo4JOGM.getContextList().size() == 0) {
+
+            ClassInfo info = null;
+            try {
+                info = new ClassInfo(Class.forName(fullOrPartialClassName));
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            return info;
+            /*
             ClassInfo match = null;
             for (String fqn : infos.keySet()) {
                 if (fqn.endsWith("." + fullOrPartialClassName) || fqn.equals(fullOrPartialClassName)) {
@@ -29,11 +41,11 @@ public class Neo4JOSGI {
                     }
                 }
             }
-            return match;
+            return match;*/
         } else {
+
             // @todo PHILIP THIS IS A BAD HACK!!!!!!!!!!!!!!!!!
-            if ((modelPackagePath!=null) && (!fullOrPartialClassName.contains(".")))
-                fullOrPartialClassName = modelPackagePath + "." + fullOrPartialClassName;
+
 
             ClassInfo info = null;
             // We just want to return simple class information

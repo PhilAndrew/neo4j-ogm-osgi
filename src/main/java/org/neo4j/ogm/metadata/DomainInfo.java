@@ -329,13 +329,13 @@ public class DomainInfo implements ClassFileProcessor {
     }
 
     // all classes, including interfaces will be registered in classNameToClassInfo map
-    public ClassInfo getClassSimpleName(String fullOrPartialClassName) {
-        return getClassInfo(fullOrPartialClassName, classNameToClassInfo);
+    public ClassInfo getClassSimpleName(String fullOrPartialClassName, Boolean queryForARealClass) {
+        return getClassInfo(fullOrPartialClassName, queryForARealClass, classNameToClassInfo);
     }
 
 
-    public ClassInfo getClassInfoForInterface(String fullOrPartialClassName) {
-        ClassInfo classInfo = getClassSimpleName(fullOrPartialClassName);
+    public ClassInfo getClassInfoForInterface(String fullOrPartialClassName, Boolean queryForARealClass) {
+        ClassInfo classInfo = getClassSimpleName(fullOrPartialClassName, queryForARealClass);
         if (classInfo != null && classInfo.isInterface()) {
             return classInfo;
         }
@@ -343,8 +343,8 @@ public class DomainInfo implements ClassFileProcessor {
     }
 
 
-    private ClassInfo getClassInfo(String fullOrPartialClassName, Map<String, ClassInfo> infos) {
-        return Neo4JOSGI.getClassInfo(fullOrPartialClassName, infos);
+    private ClassInfo getClassInfo(String fullOrPartialClassName, Boolean queryForARealClass, Map<String, ClassInfo> infos) {
+        return Neo4JOSGI.getClassInfo(fullOrPartialClassName, queryForARealClass, infos);
     }
 
     public List<ClassInfo> getClassInfosWithAnnotation(String annotation) {

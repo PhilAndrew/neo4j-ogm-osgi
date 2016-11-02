@@ -513,7 +513,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 	}
 
 	private ClassInfo getRelationshipEntity(Edge edge) {
-		for (ClassInfo classInfo : metadata.classInfoByLabelOrType(edge.getType())) {
+		for (ClassInfo classInfo : metadata.classInfoByLabelOrType(edge.getType(), true)) {
 			if (classInfo != null) {
 				//verify the start and end node types because there might be more than one RE defined with the same type and direction but different start/end nodes
 				Object source = mappingContext.getNodeEntity(edge.getStartNode());
