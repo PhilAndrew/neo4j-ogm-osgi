@@ -94,7 +94,7 @@ public class DeleteDelegate implements Capability.Delete {
 
         for (Object object : objects ) {
 
-            ClassInfo classInfo = session.metaData().classInfo(object);
+            ClassInfo classInfo = session.metaData().classInfoForObject(object);
 
             if (classInfo != null) {
 
@@ -139,7 +139,7 @@ public class DeleteDelegate implements Capability.Delete {
 
     @Override
     public <T> void deleteAll(Class<T> type) {
-        ClassInfo classInfo = session.metaData().classInfo(type.getName());
+        ClassInfo classInfo = session.metaData().classInfoMaybeWrong(type.getName(), true);
         if (classInfo != null) {
             Statement request = getDeleteStatementsBasedOnType(type).delete(session.entityType(classInfo.name()));
             RowModelRequest query = new DefaultRowModelRequest(request.getStatement(), request.getParameters());
@@ -158,7 +158,7 @@ public class DeleteDelegate implements Capability.Delete {
     @Override
     public <T> Object delete(Class<T> clazz, Iterable<Filter> filters, boolean listResults) {
 
-        ClassInfo classInfo = session.metaData().classInfo(clazz.getSimpleName());
+        ClassInfo classInfo = session.metaData().classInfoMaybeWrong(clazz.getSimpleName(), true);
 
         if (classInfo != null) {
 

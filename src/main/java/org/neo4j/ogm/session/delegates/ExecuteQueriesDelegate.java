@@ -111,7 +111,7 @@ public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
 
     private <T> Iterable<T> executeAndMap(Class<T> type, String cypher, Map<String, ?> parameters, ResponseMapper mapper) {
 
-        if (type != null && session.metaData().classInfo(type.getSimpleName()) != null) {
+        if (type != null && session.metaData().classInfoMaybeWrong(type.getSimpleName(), true) != null) {
             GraphModelRequest request = new DefaultGraphModelRequest(cypher, parameters);
             try (Response<GraphModel> response = session.requestHandler().execute(request)) {
                 return new GraphEntityMapper(session.metaData(), session.context()).map(type, response);
@@ -127,7 +127,7 @@ public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
     @Override
     public long countEntitiesOfType(Class<?> entity) {
 
-        ClassInfo classInfo = session.metaData().classInfo(entity.getName());
+        ClassInfo classInfo = session.metaData().classInfoMaybeWrong(entity.getName(), true);
         if (classInfo == null) {
             return 0;
         }
@@ -140,10 +140,10 @@ public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
 
             for (FieldInfo fieldInfo : classInfo.fieldsInfo().fields()) {
                 if (fieldInfo.hasAnnotation(StartNode.CLASS)) {
-                    startNodeInfo = session.metaData().classInfo(ClassUtils.getType(fieldInfo.getTypeDescriptor()).getName());
+                    startNodeInfo = session.metaData().classInfoForObject(ClassUtils.getType(fieldInfo.getTypeDescriptor()).getName());
                 }
                 else if (fieldInfo.hasAnnotation(EndNode.CLASS)) {
-                    endNodeInfo = session.metaData().classInfo(ClassUtils.getType(fieldInfo.getTypeDescriptor()).getName());
+                    endNodeInfo = session.metaData().classInfoForObject(ClassUtils.getType(fieldInfo.getTypeDescriptor()).getName());
                 }
                 if (endNodeInfo != null && startNodeInfo != null) {
                     break;
@@ -167,7 +167,7 @@ public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
     @Override
     public long count(Class<?> clazz, Iterable<Filter> filters) {
 
-        ClassInfo classInfo = session.metaData().classInfo(clazz.getSimpleName());
+        ClassInfo classInfo = session.metaData().classInfoMaybeWrong(clazz.getSimpleName(), true);
 
         if (classInfo != null) {
 

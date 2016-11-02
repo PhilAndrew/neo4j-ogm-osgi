@@ -88,7 +88,7 @@ public class SingleUseEntityMapper {
 	}
 
 	private ClassInfo resolveClassInfoFor(Class<?> type) {
-		ClassInfo classInfo = this.metadata.classInfo(type.getSimpleName());
+		ClassInfo classInfo = this.metadata.classInfoMaybeWrong(type.getSimpleName(), true);
 		if (classInfo != null) {
 			return classInfo;
 		}

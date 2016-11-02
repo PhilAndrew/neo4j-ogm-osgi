@@ -44,7 +44,7 @@ public class LoadByInstancesDelegate implements Capability.LoadByInstances {
 
         Set<Long> ids = new HashSet<>();
         Class type = objects.iterator().next().getClass();
-        ClassInfo classInfo = session.metaData().classInfo(type.getName());
+        ClassInfo classInfo = session.metaData().classInfoMaybeWrong(type.getName(), true);
         Field identityField = classInfo.getField(classInfo.identityField());
 
         for (Object o: objects) {

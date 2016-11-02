@@ -48,6 +48,10 @@ public class MetaData {
         domainInfo = new DomainInfo(packages);
     }
 
+
+    public ClassInfo classInfoMaybeWrong(String name, Boolean queryForARealClass) {
+        return classInfo(name, queryForARealClass);
+    }
     /**
      * Finds the ClassInfo for the supplied partial class name or label.
      *
@@ -88,10 +92,10 @@ public class MetaData {
     /**
      * Finds the ClassInfo for the supplied object by looking up its class name
      *
-     * @param object the class name whose classInfo we want to find
+     * @param object the class name whose classInfoForObject we want to find
      * @return A ClassInfo matching the supplied object's class, or null if it doesn't exist
      */
-    public ClassInfo classInfo(Object object) {
+    public ClassInfo classInfoForObject(Object object) {
         return classInfo(object.getClass().getName(), true);
     }
 
@@ -147,7 +151,7 @@ public class MetaData {
                     continue;
                 }
 
-                // if classInfo is an interface or abstract there must be a single concrete implementing class/subclass
+                // if classInfoForObject is an interface or abstract there must be a single concrete implementing class/subclass
                 // if there is, use that, otherwise this label cannot be resolved
                 if (taxonClassInfo.isInterface()) {
                     LOGGER.debug("label is on an interface. Looking for a single implementing class...");
@@ -256,7 +260,7 @@ public class MetaData {
     }
 
     public boolean isRelationshipEntity(String className) {
-        ClassInfo classInfo = classInfo(className);
+        ClassInfo classInfo = classInfo(className, true);
         return classInfo != null && null != classInfo.annotationsInfo().get(RelationshipEntity.CLASS);
     }
 
@@ -273,7 +277,7 @@ public class MetaData {
     }
 
     public String entityType(String name) {
-        ClassInfo classInfo = classInfo(name);
+        ClassInfo classInfo = classInfo(name, true);
         if(isRelationshipEntity(classInfo.name())) {
             AnnotationInfo annotation = classInfo.annotationsInfo().get(RelationshipEntity.CLASS);
             return annotation.get(RelationshipEntity.TYPE, classInfo.name());

@@ -547,7 +547,7 @@ public class Neo4jSession implements Session {
             filter.setPropertyName(resolvePropertyName(filter.getOwnerEntityType(), filter.getPropertyName()));
             if(filter.isNested()) {
                 resolveRelationshipType(filter);
-                ClassInfo nestedClassInfo = metaData().classInfo(filter.getNestedPropertyType().getName());
+                ClassInfo nestedClassInfo = metaData().classInfoMaybeWrong(filter.getNestedPropertyType().getName(), true);
                 filter.setNestedEntityTypeLabel(entityType(nestedClassInfo.name()));
                 if(metaData().isRelationshipEntity(nestedClassInfo.name())) {
                     filter.setNestedRelationshipEntity(true);
@@ -569,7 +569,7 @@ public class Neo4jSession implements Session {
     }
 
     private String resolvePropertyName(Class entityType, String propertyName) {
-        ClassInfo classInfo = metaData().classInfo(entityType.getName());
+        ClassInfo classInfo = metaData().classInfoMaybeWrong(entityType.getName(), true);
         FieldInfo fieldInfo = classInfo.propertyFieldByName(propertyName);
         if (fieldInfo != null && fieldInfo.getAnnotations() != null) {
             AnnotationInfo annotation = fieldInfo.getAnnotations().get(Property.CLASS);
@@ -577,12 +577,12 @@ public class Neo4jSession implements Session {
                 return annotation.get(Property.NAME, propertyName);
             }
         }
-        //session.metaData().classInfo(entityType.getName()).propertyFieldByName(propertyName).property();
+        //session.metaData().classInfoForObject(entityType.getName()).propertyFieldByName(propertyName).property();
         return propertyName;
     }
 
     private void resolveRelationshipType(Filter parameter) {
-        ClassInfo classInfo = metaData().classInfo(parameter.getOwnerEntityType().getName());
+        ClassInfo classInfo = metaData().classInfoMaybeWrong(parameter.getOwnerEntityType().getName(), true);
         FieldInfo fieldInfo = classInfo.relationshipFieldByName(parameter.getNestedPropertyName());
 
         String defaultRelationshipType = RelationshipUtils.inferRelationshipType(parameter.getNestedPropertyName());

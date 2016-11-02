@@ -102,7 +102,7 @@ public class MappingContext {
     }
 
     public boolean isDirty(Object entity) {
-        ClassInfo classInfo = metaData.classInfo(entity);
+        ClassInfo classInfo = metaData.classInfoForObject(entity);
         Object id = EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(entity);
         return !objectMemo.remembered((Long) id, entity, classInfo);
     }
@@ -153,7 +153,7 @@ public class MappingContext {
      */
     public void removeType(Class<?> type) {
 
-        ClassInfo classInfo = metaData.classInfo(type.getName());
+        ClassInfo classInfo = metaData.classInfoMaybeWrong(type.getName(), true);
 
         if (classInfo.isInterface()) {
             List<ClassInfo> implementingClasses = metaData.getImplementingClassInfos(classInfo.name());
@@ -203,7 +203,7 @@ public class MappingContext {
      */
     public void removeEntity(Object entity) {
         Class<?> type = entity.getClass();
-        ClassInfo classInfo = metaData.classInfo(type.getName());
+        ClassInfo classInfo = metaData.classInfoMaybeWrong(type.getName(), true);
         PropertyReader identityReader = EntityAccessManager.getIdentityPropertyReader(classInfo);
         Long id = (Long) identityReader.readProperty(entity);
 
@@ -225,7 +225,7 @@ public class MappingContext {
     public void reset(Object entity) {
         removeEntity(entity);
         Class<?> type = entity.getClass();
-        ClassInfo classInfo = metaData.classInfo(type.getName());
+        ClassInfo classInfo = metaData.classInfoMaybeWrong(type.getName(), true);
         Field identityField = classInfo.getField(classInfo.identityField());
         FieldWriter.write(identityField, entity, null);
     }
@@ -236,7 +236,7 @@ public class MappingContext {
         Set<Object> neighbours = new HashSet<>();
 
         Class<?> type = entity.getClass();
-        ClassInfo classInfo = metaData.classInfo(type.getName());
+        ClassInfo classInfo = metaData.classInfoMaybeWrong(type.getName(), true);
         PropertyReader identityReader = EntityAccessManager.getIdentityPropertyReader(classInfo);
 
         Long id = (Long) identityReader.readProperty(entity);
@@ -276,8 +276,8 @@ public class MappingContext {
         while (relationshipEntityIdIterator.hasNext()) {
             Long relationshipEntityId = relationshipEntityIdIterator.next();
             Object relationshipEntity = relationshipEntityRegister.get(relationshipEntityId);
-            RelationalReader startNodeReader = EntityAccessManager.getStartNodeReader(metaData.classInfo(relationshipEntity));
-            RelationalReader endNodeReader = EntityAccessManager.getEndNodeReader(metaData.classInfo(relationshipEntity));
+            RelationalReader startNodeReader = EntityAccessManager.getStartNodeReader(metaData.classInfoForObject(relationshipEntity));
+            RelationalReader endNodeReader = EntityAccessManager.getEndNodeReader(metaData.classInfoForObject(relationshipEntity));
             if (startOrEndEntity == startNodeReader.read(relationshipEntity) || startOrEndEntity == endNodeReader.read(relationshipEntity)) {
                 relationshipEntityIdIterator.remove();
             }
@@ -311,7 +311,7 @@ public class MappingContext {
                             if (mappedRelationship.getRelationshipId() != null) {
                                 Object relEntity = relationshipEntityRegister.get(mappedRelationship.getRelationshipId());
                                 if (relEntity != null) {
-                                    ClassInfo relClassInfo = metaData.classInfo(relEntity);
+                                    ClassInfo relClassInfo = metaData.classInfoForObject(relEntity);
                                     PropertyReader relIdentityReader = EntityAccessManager.getIdentityPropertyReader(relClassInfo);
                                     purge(relEntity, relIdentityReader, relClassInfo.getUnderlyingClass());
                                 }
@@ -326,10 +326,10 @@ public class MappingContext {
                 // remove a RelationshipEntity
                 if (relationshipEntityRegister.contains(id)) {
                     relationshipEntityRegister.remove(id);
-                    RelationalReader startNodeReader = EntityAccessManager.getStartNodeReader(metaData.classInfo(entity));
+                    RelationalReader startNodeReader = EntityAccessManager.getStartNodeReader(metaData.classInfoForObject(entity));
                     Object startNode = startNodeReader.read(entity);
                     removeEntity(startNode);
-                    RelationalReader endNodeReader = EntityAccessManager.getEndNodeReader(metaData.classInfo(entity));
+                    RelationalReader endNodeReader = EntityAccessManager.getEndNodeReader(metaData.classInfoForObject(entity));
                     Object endNode = endNodeReader.read(entity);
                     removeEntity(endNode);
                 }
@@ -347,7 +347,7 @@ public class MappingContext {
     }
 
     private void remember(Object entity) {
-        ClassInfo classInfo = metaData.classInfo(entity);
+        ClassInfo classInfo = metaData.classInfoForObject(entity);
         Long id = (Long) EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(entity);
         objectMemo.remember(id, entity, classInfo);
         FieldInfo fieldInfo = classInfo.labelFieldOrNull();

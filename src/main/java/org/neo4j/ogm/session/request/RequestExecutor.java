@@ -134,7 +134,7 @@ public class RequestExecutor {
 	private void updateSessionContext(CompileContext context) {
 		for (Object targetObject : context.registry()) {
 			if (!(targetObject instanceof TransientRelationship)) {
-				ClassInfo classInfo = session.metaData().classInfo(targetObject);
+				ClassInfo classInfo = session.metaData().classInfoForObject(targetObject);
 				Field identityField = classInfo.getField(classInfo.identityField());
 				Object value = FieldWriter.read(identityField, targetObject);
 				if (value != null) session.context().replaceNodeEntity(targetObject, (Long) value);
@@ -302,13 +302,13 @@ public class RequestExecutor {
 				LOGGER.debug("updating existing node id: {}", referenceMapping.id);
 				Object existingNodeEntity = session.context().getNodeEntity(referenceMapping.id);
 				if (existingNodeEntity != null) {
-					ClassInfo classInfo = session.metaData().classInfo(existingNodeEntity);
+					ClassInfo classInfo = session.metaData().classInfoForObject(existingNodeEntity);
 					registerEntity(session.context(), classInfo, referenceMapping.id, existingNodeEntity);
 				} else {
 					// the session could have been cleared, so register this entity again in the mapping context
 					for (Object obj : context.registry()) { //TODO find a better way to do this instead of iterating through the log
 						if (!(obj instanceof TransientRelationship)) {
-							ClassInfo classInfo = session.metaData().classInfo(obj);
+							ClassInfo classInfo = session.metaData().classInfoForObject(obj);
 							PropertyReader idReader = EntityAccessManager.getIdentityPropertyReader(classInfo);
 							Long id = (Long) idReader.readProperty(obj);
 							if (id != null && id.equals(referenceMapping.id)) {
@@ -339,7 +339,7 @@ public class RequestExecutor {
 				// not all relationship ids represent relationship entities
 			    if (existingRelationshipEntity != null) {
 					LOGGER.debug("updating existing relationship entity id: {}", referenceMapping.id);
-					ClassInfo classInfo = session.metaData().classInfo(existingRelationshipEntity);
+					ClassInfo classInfo = session.metaData().classInfoForObject(existingRelationshipEntity);
 					registerEntity(session.context(), classInfo, referenceMapping.id, existingRelationshipEntity);
 				}
 			} else {
@@ -388,7 +388,7 @@ public class RequestExecutor {
 		Transaction tx = session.getTransaction();
 		if (persisted != null) {  // it will be null if the variable represents a simple relationship.
 			// set the id field of the newly created domain object
-			ClassInfo classInfo = session.metaData().classInfo(persisted);
+			ClassInfo classInfo = session.metaData().classInfoForObject(persisted);
 			Field identityField = classInfo.getField(classInfo.identityField());
 			FieldWriter.write(identityField, persisted, identity);
 

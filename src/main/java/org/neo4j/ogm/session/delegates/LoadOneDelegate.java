@@ -52,7 +52,7 @@ public class LoadOneDelegate implements Capability.LoadOne {
 
     private <T> T lookup(Class<T> type, Long id) {
         Object ref;
-        ClassInfo typeInfo = session.metaData().classInfo(type.getName());
+        ClassInfo typeInfo = session.metaData().classInfoMaybeWrong(type.getName(), true);
         if (typeInfo.annotationsInfo().get(RelationshipEntity.CLASS) == null) {
             ref = session.context().getNodeEntity(id);
         } else {

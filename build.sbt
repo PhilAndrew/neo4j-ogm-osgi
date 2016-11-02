@@ -1,7 +1,7 @@
 
 name := "neo4j-ogm-osgi"
 
-version := "1.4.20"
+version := "1.4.21"
 
 scalaVersion := "2.11.8"
 
