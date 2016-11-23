@@ -22,6 +22,7 @@ import java.io.InputStream;
 public interface ClassFileProcessor {
 
     void process(InputStream inputStream) throws IOException;
+    void processClass(Class c) throws IOException;
     void finish();
 
 }

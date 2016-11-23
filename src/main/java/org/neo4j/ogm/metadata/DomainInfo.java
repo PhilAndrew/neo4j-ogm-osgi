@@ -268,8 +268,16 @@ public class DomainInfo implements ClassFileProcessor {
     }
 
     @Override
+    public void processClass(Class c) throws IOException {
+        ClassInfo classInfo = new ClassInfo(c);
+    }
+
+
+    @Override
     public void process(final InputStream inputStream) throws IOException {
 
+        //throw new IOException("This should not be called as we never process files anymore");
+/*
         ClassInfo classInfo = new ClassInfo(inputStream);
 
         String className = classInfo.name();
@@ -302,7 +310,7 @@ public class DomainInfo implements ClassFileProcessor {
                 LOGGER.debug("Registering enum class: {}", thisClassInfo.name());
                 enumTypes.add(thisClassInfo.getUnderlyingClass());
             }
-        }
+        }*/
     }
 
     private void load(String... packages) {
@@ -312,6 +320,7 @@ public class DomainInfo implements ClassFileProcessor {
         interfaceNameToClassInfo.clear();
 
         for (String packageName : packages) {
+            System.out.println("In DomainInfo: " + packageName);
             String path = packageName.replace(".", "/");
             // ensure classpath entries are complete, to ensure we don't accidentally admit partial matches.
             if (!path.endsWith("/")) {
@@ -320,8 +329,10 @@ public class DomainInfo implements ClassFileProcessor {
             classPaths.add(path);
         }
 
-        new ClassPathScanner().scan(classPaths, this);
-
+        //new ClassPathScanner().scan(classPaths, this);
+        //for (String packageName : packages) {
+        //    Neo4JOSGI.getClassesInPackage(packageName);
+        //}
     }
 
     public ClassInfo getClass(String fqn) {

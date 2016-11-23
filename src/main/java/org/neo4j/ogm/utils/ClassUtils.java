@@ -166,6 +166,7 @@ public abstract class ClassUtils {
     public static Set<File> getUniqueClasspathElements(List<String> classPaths) {
         Set<File> pathFiles = new HashSet<>();
         for(String classPath : classPaths) {
+            System.out.println("Attempting to search classpath elements for: " + classPath);
             try {
                 Enumeration<URL> resources = ClassUtils.class.getClassLoader().getResources(classPath.replace(".","/"));
                 while(resources.hasMoreElements()) {

@@ -9,6 +9,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,7 @@ public class Neo4JOSGI {
             ClassInfo info = null;
             // We just want to return simple class information
 
+            System.out.println("Searching for class : " + fullOrPartialClassName);
             List<BundleContext> listOf = Neo4JOGM.getContextList();
             Class<?> classFound = null;
             breakOut:
@@ -58,7 +60,7 @@ public class Neo4JOSGI {
                 try {
                     Class<?> ccc = bundleContext.getBundle().loadClass(fullOrPartialClassName);
                     if (ccc != null) {
-                        //System.out.println("Class found in normal bundle context for : " + bundleContext.getBundle().getLocation());
+                        System.out.println("Class found in normal bundle context for : " + bundleContext.getBundle().getLocation());
                         classFound = ccc;
                         break breakOut;
                     }
@@ -67,7 +69,7 @@ public class Neo4JOSGI {
                     for (Bundle bundle : bundles) {
                         Class<?> c = bundle.loadClass(fullOrPartialClassName);
                         if (c != null) {
-                            //System.out.println("Bundle where class is found is : " + bundle.getLocation());
+                            System.out.println("Bundle where class is found is : " + bundle.getLocation());
                             classFound = c;
                             break breakOut;
                         }
@@ -161,4 +163,6 @@ public class Neo4JOSGI {
             return foundClass;
         }
     }
+
+
 }
