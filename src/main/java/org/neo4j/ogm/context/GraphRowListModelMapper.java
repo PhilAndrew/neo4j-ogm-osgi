@@ -42,7 +42,7 @@ public class GraphRowListModelMapper implements ResponseMapper<GraphRowListModel
 
         List<T> result = new ArrayList<>();
         Set<Long> resultEntityIds = new LinkedHashSet<>();
-        ClassInfo classInfo = metaData.classInfoMaybeWrong(type.getName(), true);
+        ClassInfo classInfo = metaData.classInfo(type.getName());
 
         Set<Long> nodeIds = new LinkedHashSet<>();
         Set<Long> edgeIds = new LinkedHashSet<>();

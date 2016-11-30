@@ -73,7 +73,7 @@ public class SaveDelegate implements Capability.Save {
                 eventsDelegate.postSave();
             }
         } else {
-            ClassInfo classInfo = session.metaData().classInfoForObject(object);
+            ClassInfo classInfo = session.metaData().classInfo(object);
             if (classInfo != null) {
 
                 if (session.eventsEnabled()) {

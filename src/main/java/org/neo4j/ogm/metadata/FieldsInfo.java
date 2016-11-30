@@ -24,6 +24,16 @@ import java.util.*;
  */
 public class FieldsInfo {
 
+    // Start OSGi
+
+    public Map<String, FieldInfo> getFieldsHashMap() {
+        return fields;
+    }
+
+    public void set(String name, FieldInfo v) { fields.put(name, v); }
+
+    // End OSGi
+
     private static final int STATIC_FIELD = 0x0008;
     private static final int FINAL_FIELD = 0x0010;
     private static final int TRANSIENT_FIELD = 0x0080;
@@ -31,10 +41,6 @@ public class FieldsInfo {
     private final Map<String, FieldInfo> fields = new HashMap<>();
 
     FieldsInfo() {
-    }
-
-    public Map<String, FieldInfo> getFieldsHashMap() {
-        return fields;
     }
 
     public FieldsInfo(DataInputStream dataInputStream, ConstantPool constantPool) throws IOException {
@@ -98,5 +104,4 @@ public class FieldsInfo {
             }
         }
     }
-    public void set(String name, FieldInfo v) { fields.put(name, v); }
 }

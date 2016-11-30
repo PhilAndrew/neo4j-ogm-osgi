@@ -13,11 +13,6 @@
 
 package org.neo4j.ogm.classloader;
 
-import org.neo4j.ogm.Neo4JOGM;
-import org.neo4j.ogm.Neo4JOSGI;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-
 /**
  * The public API for metadata class loading in the OGM.
  *
@@ -39,6 +34,6 @@ public abstract class MetaDataClassLoader {
     private static final ClassLoader classLoader = ClassLoaderResolver.resolve();
 
     public static Class loadClass(final String name) throws ClassNotFoundException {
-        return Neo4JOSGI.loadClass(classLoader, name);
+        return Class.forName(name, false, classLoader);
     }
 }

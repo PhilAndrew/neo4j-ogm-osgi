@@ -48,10 +48,10 @@ public class MetaData {
         domainInfo = new DomainInfo(packages);
     }
 
-
-    public ClassInfo classInfoMaybeWrong(String name, Boolean queryForARealClass) {
-        return classInfo(name, queryForARealClass);
+    public MetaData(Class... classes) {
+        domainInfo = new DomainInfo(classes);
     }
+
     /**
      * Finds the ClassInfo for the supplied partial class name or label.
      *
@@ -60,7 +60,7 @@ public class MetaData {
      * @param name the simple class name or label for a class we want to find
      * @return A ClassInfo matching the supplied name, or null if it doesn't exist
      */
-    public ClassInfo classInfo(String name, Boolean queryForARealClass) {
+    public ClassInfo classInfo(String name) {
         if (classInfos.containsKey(name)) {
             return classInfos.get(name);
         }
@@ -77,7 +77,7 @@ public class MetaData {
             return classInfo;
         }
 
-        classInfo = domainInfo.getClassSimpleName(name, queryForARealClass);
+        classInfo = domainInfo.getClassSimpleName(name);
         if (classInfo != null) {
             classInfos.put(name, classInfo);
             return classInfo;
@@ -92,11 +92,11 @@ public class MetaData {
     /**
      * Finds the ClassInfo for the supplied object by looking up its class name
      *
-     * @param object the class name whose classInfoForObject we want to find
+     * @param object the class name whose classInfo we want to find
      * @return A ClassInfo matching the supplied object's class, or null if it doesn't exist
      */
-    public ClassInfo classInfoForObject(Object object) {
-        return classInfo(object.getClass().getName(), true);
+    public ClassInfo classInfo(Object object) {
+        return classInfo(object.getClass().getName());
     }
 
     private ClassInfo _classInfo(String name, String nodeEntityAnnotation, String annotationPropertyName) {
@@ -143,7 +143,7 @@ public class MetaData {
 
             for (String taxon : taxa) {
                 LOGGER.debug("looking for concrete class to resolve label: {}", taxon);
-                ClassInfo taxonClassInfo = classInfo(taxon, false);
+                ClassInfo taxonClassInfo = classInfo(taxon);
 
                 // ignore any foreign labels
                 if (taxonClassInfo == null) {
@@ -151,11 +151,11 @@ public class MetaData {
                     continue;
                 }
 
-                // if classInfoForObject is an interface or abstract there must be a single concrete implementing class/subclass
+                // if classInfo is an interface or abstract there must be a single concrete implementing class/subclass
                 // if there is, use that, otherwise this label cannot be resolved
                 if (taxonClassInfo.isInterface()) {
                     LOGGER.debug("label is on an interface. Looking for a single implementing class...");
-                    taxonClassInfo = findSingleImplementor(taxon, true);
+                    taxonClassInfo = findSingleImplementor(taxon);
                 } else if (taxonClassInfo.isAbstract()) {
                     LOGGER.debug("label is on an abstract class. Looking for a single concrete subclass...");
                     taxonClassInfo = findFirstSingleConcreteClass(taxonClassInfo, taxonClassInfo.directSubclasses());
@@ -205,7 +205,7 @@ public class MetaData {
      * @param name the simple class name or label for a class we want to find
      * @return A Set of ClassInfo matching the supplied name, or empty if it doesn't exist
      */
-    public Set<ClassInfo> classInfoByLabelOrType(String name, Boolean queryForARealClass) {
+    public Set<ClassInfo> classInfoByLabelOrType(String name) {
 
         Set<ClassInfo> classInfos = new HashSet<>();
 
@@ -219,7 +219,7 @@ public class MetaData {
             classInfos.add(info);
         }
 
-        classInfo = domainInfo.getClassSimpleName(name, queryForARealClass);
+        classInfo = domainInfo.getClassSimpleName(name);
         if (classInfo != null) {
             classInfos.add(classInfo);
         }
@@ -251,7 +251,7 @@ public class MetaData {
         // replace with its single implementing class - iff exactly one implementing class exists
         ClassInfo classInfo = classInfoList.iterator().next();
         if (classInfo.isInterface()) {
-            classInfo = findSingleImplementor(classInfo.name(), true);
+            classInfo = findSingleImplementor(classInfo.name());
         }
 
         // if we have a potential concrete class, keep going!
@@ -260,12 +260,12 @@ public class MetaData {
     }
 
     public boolean isRelationshipEntity(String className) {
-        ClassInfo classInfo = classInfo(className, true);
+        ClassInfo classInfo = classInfo(className);
         return classInfo != null && null != classInfo.annotationsInfo().get(RelationshipEntity.CLASS);
     }
 
-    private ClassInfo findSingleImplementor(String taxon, Boolean queryForARealClass) {
-        ClassInfo interfaceInfo = domainInfo.getClassInfoForInterface(taxon, queryForARealClass);
+    private ClassInfo findSingleImplementor(String taxon) {
+        ClassInfo interfaceInfo = domainInfo.getClassInfoForInterface(taxon);
         if(interfaceInfo!=null && interfaceInfo.directImplementingClasses()!=null && interfaceInfo.directImplementingClasses().size()==1) {
             return interfaceInfo.directImplementingClasses().get(0);
         }
@@ -277,7 +277,7 @@ public class MetaData {
     }
 
     public String entityType(String name) {
-        ClassInfo classInfo = classInfo(name, true);
+        ClassInfo classInfo = classInfo(name);
         if(isRelationshipEntity(classInfo.name())) {
             AnnotationInfo annotation = classInfo.annotationsInfo().get(RelationshipEntity.CLASS);
             return annotation.get(RelationshipEntity.TYPE, classInfo.name());

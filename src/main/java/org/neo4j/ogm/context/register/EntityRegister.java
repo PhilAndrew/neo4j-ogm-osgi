@@ -13,41 +13,56 @@
 
 package org.neo4j.ogm.context.register;
 
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @author vince
+ * @author Vince Bickers
+ * @author Mark Angrish
  */
-public class EntityRegister  {
+public class EntityRegister<T> {
 
-    private final ConcurrentMap<Long, Object> register = new ConcurrentHashMap<>();
+    private final Logger LOGGER = LoggerFactory.getLogger(EntityRegister.class);
 
-    public Object get(Long id) {
+    private final Map<T, Object> register = new HashMap<>();
+
+    public Object get(T id) {
         return register.get(id);
     }
 
-    public boolean add(Long id, Object entity) {
-        if (register.putIfAbsent(id, entity) == null) {
-            return true;
+    public boolean add(T id, Object entity) {
+        final Object existing = register.get(id);
+
+        if (existing != null) {
+            LOGGER.debug("Object already in node registry: {}, {}", id, entity);
+            return false;
         }
-        return false;
+
+        register.put(id, entity);
+        LOGGER.debug("Added object to node registry: {}, {}", id, entity);
+        return true;
     }
 
-    public boolean contains(Long id) {
+    public boolean contains(T id) {
         return register.containsKey(id);
     }
 
-    public void remove(Long id) {
+
+    public void remove(T id) {
+        LOGGER.debug("Removed object with id {}", id);
         register.remove(id);
     }
 
     public void clear() {
+        LOGGER.debug("Register has been cleared");
         register.clear();
     }
 
-    public Iterator<Long> iterator() {
+    public Iterator<T> iterator() {
         return register.keySet().iterator();
     }
 }

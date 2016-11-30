@@ -34,7 +34,7 @@ public class GraphIdDelegate implements Capability.GraphId {
 	@Override
 	public Long resolveGraphIdFor(Object possibleEntity) {
 		if (possibleEntity!=null) {
-			ClassInfo classInfo = session.metaData().classInfoForObject(possibleEntity);
+			ClassInfo classInfo = session.metaData().classInfo(possibleEntity);
 			try {
 				if (classInfo != null) {
 					Object id = EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(possibleEntity);

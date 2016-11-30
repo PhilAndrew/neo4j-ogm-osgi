@@ -125,10 +125,6 @@ public class ClassPathScanner {
         this.classPaths = classPaths;
         this.processor = processor;
 
-        for (String s: classPaths) {
-            System.out.println("Scanning: " + s);
-        }
-
         Set<File> classPathElements = getUniqueClasspathElements(classPaths);
 
         LOGGER.debug("Classpath elements:");

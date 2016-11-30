@@ -19,6 +19,7 @@ import org.neo4j.ogm.exception.ServiceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
@@ -32,14 +33,15 @@ public class DriverService {
     private static final Logger logger = LoggerFactory.getLogger(DriverService.class);
 
     private static Driver load(String className) {
-        // Hard coded the Bolt Driver due to OSGi problem in the following code
-        // @todo Fix this Philip
         return new org.neo4j.ogm.drivers.bolt.driver.BoltDriver();
         /*
-        for (Driver driver : ServiceLoader.load(Driver.class)) {
+        Iterator<Driver> iterator = ServiceLoader.load(Driver.class).iterator();
+
+        while (iterator.hasNext()) {
             try {
+                Driver driver = iterator.next();
                 if (driver.getClass().getName().equals(className)) {
-                    logger.info("Using driver: {}", className);
+                    logger.debug("Using driver: {}", className);
                     return driver;
                 }
             } catch (ServiceConfigurationError sce) {
@@ -47,8 +49,8 @@ public class DriverService {
             }
         }
 
-        throw new ServiceNotFoundException("Driver: " + className);
-*/
+        throw new ServiceNotFoundException(className);*/
+
     }
 
     /**

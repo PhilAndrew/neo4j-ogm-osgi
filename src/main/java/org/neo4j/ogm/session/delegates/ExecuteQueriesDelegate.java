@@ -47,6 +47,7 @@ import org.neo4j.ogm.utils.ClassUtils;
 /**
  * @author Vince Bickers
  * @author Luanne Misquitta
+ * @author Jasper Blues
  */
 public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
 
@@ -111,7 +112,7 @@ public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
 
     private <T> Iterable<T> executeAndMap(Class<T> type, String cypher, Map<String, ?> parameters, ResponseMapper mapper) {
 
-        if (type != null && session.metaData().classInfoMaybeWrong(type.getSimpleName(), true) != null) {
+        if (type != null && session.metaData().classInfo(type.getSimpleName()) != null) {
             GraphModelRequest request = new DefaultGraphModelRequest(cypher, parameters);
             try (Response<GraphModel> response = session.requestHandler().execute(request)) {
                 return new GraphEntityMapper(session.metaData(), session.context()).map(type, response);
@@ -127,7 +128,7 @@ public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
     @Override
     public long countEntitiesOfType(Class<?> entity) {
 
-        ClassInfo classInfo = session.metaData().classInfoMaybeWrong(entity.getName(), true);
+        ClassInfo classInfo = session.metaData().classInfo(entity.getName());
         if (classInfo == null) {
             return 0;
         }
@@ -140,10 +141,10 @@ public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
 
             for (FieldInfo fieldInfo : classInfo.fieldsInfo().fields()) {
                 if (fieldInfo.hasAnnotation(StartNode.CLASS)) {
-                    startNodeInfo = session.metaData().classInfoForObject(ClassUtils.getType(fieldInfo.getTypeDescriptor()).getName());
+                    startNodeInfo = session.metaData().classInfo(ClassUtils.getType(fieldInfo.getTypeDescriptor()).getName());
                 }
                 else if (fieldInfo.hasAnnotation(EndNode.CLASS)) {
-                    endNodeInfo = session.metaData().classInfoForObject(ClassUtils.getType(fieldInfo.getTypeDescriptor()).getName());
+                    endNodeInfo = session.metaData().classInfo(ClassUtils.getType(fieldInfo.getTypeDescriptor()).getName());
                 }
                 if (endNodeInfo != null && startNodeInfo != null) {
                     break;
@@ -167,7 +168,7 @@ public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
     @Override
     public long count(Class<?> clazz, Iterable<Filter> filters) {
 
-        ClassInfo classInfo = session.metaData().classInfoMaybeWrong(clazz.getSimpleName(), true);
+        ClassInfo classInfo = session.metaData().classInfo(clazz.getSimpleName());
 
         if (classInfo != null) {
 
@@ -196,7 +197,7 @@ public class ExecuteQueriesDelegate implements Capability.ExecuteQueries {
      * @return a count of objects that matched the query
      */
     private Long count(CypherQuery query, boolean isRelationshipEntity) {
-        String resultKey = isRelationshipEntity ? "COUNT(r)" : "COUNT(n)";
+        String resultKey = isRelationshipEntity ? "COUNT(r0)" : "COUNT(n)";
         Result result = session.query(query.getStatement(), query.getParameters(), true); // count queries are read only
         Map<String, Object> resultMap = result.iterator().next();
         return Long.parseLong(resultMap.get(resultKey).toString());

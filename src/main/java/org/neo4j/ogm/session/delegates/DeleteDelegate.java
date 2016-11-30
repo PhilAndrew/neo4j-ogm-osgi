@@ -94,7 +94,7 @@ public class DeleteDelegate implements Capability.Delete {
 
         for (Object object : objects ) {
 
-            ClassInfo classInfo = session.metaData().classInfoForObject(object);
+            ClassInfo classInfo = session.metaData().classInfo(object);
 
             if (classInfo != null) {
 
@@ -139,7 +139,7 @@ public class DeleteDelegate implements Capability.Delete {
 
     @Override
     public <T> void deleteAll(Class<T> type) {
-        ClassInfo classInfo = session.metaData().classInfoMaybeWrong(type.getName(), true);
+        ClassInfo classInfo = session.metaData().classInfo(type.getName());
         if (classInfo != null) {
             Statement request = getDeleteStatementsBasedOnType(type).delete(session.entityType(classInfo.name()));
             RowModelRequest query = new DefaultRowModelRequest(request.getStatement(), request.getParameters());
@@ -158,7 +158,7 @@ public class DeleteDelegate implements Capability.Delete {
     @Override
     public <T> Object delete(Class<T> clazz, Iterable<Filter> filters, boolean listResults) {
 
-        ClassInfo classInfo = session.metaData().classInfoMaybeWrong(clazz.getSimpleName(), true);
+        ClassInfo classInfo = session.metaData().classInfo(clazz.getSimpleName());
 
         if (classInfo != null) {
 
@@ -190,7 +190,7 @@ public class DeleteDelegate implements Capability.Delete {
      * @return a {@link List} of object ids that were deleted
      */
     private List<Long> list(CypherQuery query, boolean isRelationshipEntity) {
-        String resultKey = isRelationshipEntity ? "ID(r)" : "ID(n)";
+        String resultKey = isRelationshipEntity ? "ID(r0)" : "ID(n)";
         Result result = session.query(query.getStatement(), query.getParameters());
         List<Long> ids = new ArrayList();
         for (Map<String, Object> resultEntry : result) {
@@ -210,7 +210,7 @@ public class DeleteDelegate implements Capability.Delete {
      * @return a count of objects that were deleted
      */
     private Long count(CypherQuery query, boolean isRelationshipEntity) {
-        String resultKey = isRelationshipEntity ? "ID(r)" : "ID(n)";
+        String resultKey = isRelationshipEntity ? "ID(r0)" : "ID(n)";
         Result result = session.query(query.getStatement(), query.getParameters());
         long count = 0;
         for (Map<String, Object> resultEntry : result) {

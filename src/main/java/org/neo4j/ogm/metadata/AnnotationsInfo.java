@@ -28,6 +28,10 @@ public class AnnotationsInfo {
 
     AnnotationsInfo() {}
 
+    public void addPublic(AnnotationInfo annotationInfo) {
+        this.add(annotationInfo);
+    }
+
     public AnnotationsInfo(DataInputStream dataInputStream, ConstantPool constantPool) throws IOException {
         int attributesCount = dataInputStream.readUnsignedShort();
         for (int i = 0; i < attributesCount; i++) {
@@ -59,7 +63,7 @@ public class AnnotationsInfo {
         return classAnnotations.get(annotationName);
     }
 
-    public void add(AnnotationInfo annotationInfo) {
+    void add(AnnotationInfo annotationInfo) {
         classAnnotations.put(annotationInfo.getName(), annotationInfo);
     }
 

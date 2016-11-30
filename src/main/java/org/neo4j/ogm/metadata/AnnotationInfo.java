@@ -20,10 +20,9 @@ import java.util.Map;
 
 /**
  * @author Vince Bickers
+ * @author Mark Angrish
  */
 public class AnnotationInfo {
-
-
     public AnnotationInfo() {
     }
 
@@ -70,6 +69,11 @@ public class AnnotationInfo {
         if (elements.get(key) == null) {
             put(key, defaultValue);
         }
+        return get(key);
+    }
+
+
+    public String get(String key) {
         return elements.get(key);
     }
 
@@ -132,5 +136,4 @@ public class AnnotationInfo {
                 throw new ClassFormatError("Invalid annotation element type tag: 0x" + Integer.toHexString(tag));
         }
     }
-
 }

@@ -5,6 +5,7 @@ import org.neo4j.ogm.metadata.*;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -127,7 +128,7 @@ public class Neo4JOSGI {
             }
             if ((annotationsInfo!=null) && (annotationsInfo.list()!=null)) {
                 for (AnnotationInfo annotationInfo : annotationsInfo.list()) {
-                    a.add(annotationInfo);
+                    a.addPublic(annotationInfo);
                 }
             }
         } catch (RuntimeException ex) {
