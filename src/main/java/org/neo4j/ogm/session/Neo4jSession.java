@@ -497,17 +497,17 @@ public class Neo4jSession implements Session {
     // These helper methods for the delegates are deliberately NOT defined on the Session interface
     //
     public QueryStatements queryStatementsFor(Class type) {
-        if (metaData.isRelationshipEntity(type.getName())) {
+        if (metaData.isRelationshipEntity(type.getName(), true)) {
             return new RelationshipQueryStatements();
         }
         else {
-            final FieldInfo fieldInfo = metaData.classInfo(type.getName()).primaryIndexField();
+            final FieldInfo fieldInfo = metaData.classInfoNeo4JOSGI(type.getName(), true).primaryIndexField();
             return new NodeQueryStatements(fieldInfo != null ? fieldInfo.getName(): null);
         }
     }
 
     public String entityType(String name) {
-        return metaData.entityType(name);
+        return metaData.entityType(name, true);
     }
 
     public MappingContext context() {
@@ -550,7 +550,7 @@ public class Neo4jSession implements Session {
             }
             filter.setPropertyName(resolvePropertyName(filter.getOwnerEntityType(), filter.getPropertyName()));
 
-            ClassInfo classInfo = metaData().classInfo(entityType.getName());
+            ClassInfo classInfo = metaData().classInfoMaybeWrongNeo4JOSGI(entityType.getName(), true);
             FieldInfo fieldInfo = classInfo.fieldsInfo().get(filter.getPropertyName());
             if (fieldInfo != null) {
                 filter.setPropertyConverter(fieldInfo.getPropertyConverter());
@@ -559,9 +559,9 @@ public class Neo4jSession implements Session {
 
             if(filter.isNested()) {
                 resolveRelationshipType(filter);
-                ClassInfo nestedClassInfo = metaData().classInfo(filter.getNestedPropertyType().getName());
+                ClassInfo nestedClassInfo = metaData().classInfoMaybeWrongNeo4JOSGI(filter.getNestedPropertyType().getName(), true);
                 filter.setNestedEntityTypeLabel(entityType(nestedClassInfo.name()));
-                if(metaData().isRelationshipEntity(nestedClassInfo.name())) {
+                if(metaData().isRelationshipEntity(nestedClassInfo.name(), true)) {
                     filter.setNestedRelationshipEntity(true);
                 }
             }
@@ -581,7 +581,7 @@ public class Neo4jSession implements Session {
     }
 
     private String resolvePropertyName(Class entityType, String propertyName) {
-        ClassInfo classInfo = metaData().classInfo(entityType.getName());
+        ClassInfo classInfo = metaData().classInfoMaybeWrongNeo4JOSGI(entityType.getName(), true);
         FieldInfo fieldInfo = classInfo.propertyFieldByName(propertyName);
         if (fieldInfo != null && fieldInfo.getAnnotations() != null) {
             AnnotationInfo annotation = fieldInfo.getAnnotations().get(Property.CLASS);
@@ -589,12 +589,12 @@ public class Neo4jSession implements Session {
                 return annotation.get(Property.NAME, propertyName);
             }
         }
-        //session.metaData().classInfo(entityType.getName()).propertyFieldByName(propertyName).property();
+        //session.metaData().classInfoNeo4JOSGI(entityType.getName()).propertyFieldByName(propertyName).property();
         return propertyName;
     }
 
     private void resolveRelationshipType(Filter parameter) {
-        ClassInfo classInfo = metaData().classInfo(parameter.getOwnerEntityType().getName());
+        ClassInfo classInfo = metaData().classInfoMaybeWrongNeo4JOSGI(parameter.getOwnerEntityType().getName(), true);
         FieldInfo fieldInfo = classInfo.relationshipFieldByName(parameter.getNestedPropertyName());
 
         String defaultRelationshipType = RelationshipUtils.inferRelationshipType(parameter.getNestedPropertyName());

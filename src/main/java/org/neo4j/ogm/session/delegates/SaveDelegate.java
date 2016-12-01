@@ -12,6 +12,7 @@
  */
 package org.neo4j.ogm.session.delegates;
 
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.compiler.CompileContext;
 import org.neo4j.ogm.context.EntityGraphMapper;
 import org.neo4j.ogm.metadata.ClassInfo;
@@ -73,7 +74,7 @@ public class SaveDelegate implements Capability.Save {
                 eventsDelegate.postSave();
             }
         } else {
-            ClassInfo classInfo = session.metaData().classInfo(object);
+            ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), object);
             if (classInfo != null) {
 
                 if (session.eventsEnabled()) {

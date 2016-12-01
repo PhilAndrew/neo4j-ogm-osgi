@@ -14,6 +14,7 @@
 package org.neo4j.ogm.session.delegates;
 
 
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.entity.io.EntityAccessManager;
 import org.neo4j.ogm.exception.MappingException;
 import org.neo4j.ogm.metadata.ClassInfo;
@@ -34,7 +35,7 @@ public class GraphIdDelegate implements Capability.GraphId {
 	@Override
 	public Long resolveGraphIdFor(Object possibleEntity) {
 		if (possibleEntity!=null) {
-			ClassInfo classInfo = session.metaData().classInfo(possibleEntity);
+			ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), possibleEntity);
 			try {
 				if (classInfo != null) {
 					Object id = EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(possibleEntity);

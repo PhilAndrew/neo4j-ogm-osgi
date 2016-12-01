@@ -17,6 +17,7 @@ package org.neo4j.ogm.context;
 import java.util.*;
 
 import org.neo4j.ogm.MetaData;
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.StartNode;
@@ -158,14 +159,14 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
     }
 
     private void setIdentity(Object instance, Long id) {
-        ClassInfo classInfo = metadata.classInfo(instance);
+        ClassInfo classInfo = Neo4JOSGI.classInfo(metadata, instance);
         FieldInfo fieldInfo = classInfo.identityField();
         FieldWriter.write(classInfo.getField(fieldInfo), instance, id);
     }
 
     private void setProperties(Node nodeModel, Object instance) {
         List<Property<String, Object>> propertyList = nodeModel.getPropertyList();
-        ClassInfo classInfo = metadata.classInfo(instance);
+        ClassInfo classInfo = Neo4JOSGI.classInfo(metadata, instance);
 
         Collection<FieldInfo> compositeFields = classInfo.fieldsInfo().compositeFields();
         if (compositeFields.size() > 0) {
@@ -183,14 +184,14 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
     }
 
     private void setProperties(Edge relationshipModel, Object instance) {
-        ClassInfo classInfo = metadata.classInfo(instance);
+        ClassInfo classInfo = Neo4JOSGI.classInfo(metadata, instance);
         for (Property<?, ?> property : relationshipModel.getPropertyList()) {
             writeProperty(classInfo, instance, property);
         }
     }
 
     private void setLabels(Node nodeModel, Object instance) {
-        ClassInfo classInfo = metadata.classInfo(instance);
+        ClassInfo classInfo = Neo4JOSGI.classInfo(metadata, instance);
         FieldInfo labelFieldInfo = classInfo.labelFieldOrNull();
         if (labelFieldInfo != null) {
             Collection<String> staticLabels = classInfo.staticLabels();
@@ -233,7 +234,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
     private boolean tryMappingAsSingleton(Object source, Object parameter, Edge edge, String relationshipDirection) {
 
         String edgeLabel = edge.getType();
-        ClassInfo sourceInfo = metadata.classInfo(source);
+        ClassInfo sourceInfo = Neo4JOSGI.classInfo(metadata, source);
 
         RelationalWriter writer = EntityAccessManager.getRelationalWriter(sourceInfo, edgeLabel, relationshipDirection, parameter);
         if (writer != null && writer.forScalar()) {
@@ -286,7 +287,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
         if (!oneToOne) {
             oneToMany.add(edge);
         } else {
-            RelationalWriter writer = EntityAccessManager.getRelationalWriter(metadata.classInfo(source), edge.getType(), Relationship.OUTGOING, target);
+            RelationalWriter writer = EntityAccessManager.getRelationalWriter(Neo4JOSGI.classInfo(metadata, source), edge.getType(), Relationship.OUTGOING, target);
             mappingContext.addRelationship(new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), source.getClass(), ClassUtils.getType(writer.typeParameterDescriptor())));
         }
     }
@@ -303,7 +304,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
         }
 
         // If the source has a writer for an outgoing relationship for the rel entity, then write the rel entity on the source if it's a scalar writer
-        ClassInfo sourceInfo = metadata.classInfo(source);
+        ClassInfo sourceInfo = Neo4JOSGI.classInfo(metadata, source);
         RelationalWriter writer = EntityAccessManager.getRelationalWriter(sourceInfo, edge.getType(), Relationship.OUTGOING, relationshipEntity);
         if (writer == null) {
             logger.debug("No writer for {}", target);
@@ -317,7 +318,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
         }
 
         //If the target has a writer for an incoming relationship for the rel entity, then write the rel entity on the target if it's a scalar writer
-        ClassInfo targetInfo = metadata.classInfo(target);
+        ClassInfo targetInfo = Neo4JOSGI.classInfo(metadata, target);
         writer = EntityAccessManager.getRelationalWriter(targetInfo, edge.getType(), Relationship.INCOMING, relationshipEntity);
 
         if (writer == null) {
@@ -344,7 +345,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
         mappingContext.addRelationshipEntity(relationshipEntity, edge.getId());
 
         // set the start and end entities
-        ClassInfo relEntityInfo = metadata.classInfo(relationshipEntity);
+        ClassInfo relEntityInfo = Neo4JOSGI.classInfo(metadata, relationshipEntity);
 
         RelationalWriter startNodeWriter = EntityAccessManager.getRelationalEntityWriter(relEntityInfo, StartNode.class);
         if (startNodeWriter != null) {
@@ -435,7 +436,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
             if (!registeredEdges.contains(edge)) {
                 Object source = mappingContext.getNodeEntity(edge.getStartNode());
                 Object target = mappingContext.getNodeEntity(edge.getEndNode());
-                RelationalWriter writer = EntityAccessManager.getRelationalWriter(metadata.classInfo(source), edge.getType(), Relationship.OUTGOING, target);
+                RelationalWriter writer = EntityAccessManager.getRelationalWriter(Neo4JOSGI.classInfo(metadata, source), edge.getType(), Relationship.OUTGOING, target);
                 // ensures its tracked in the domain
                 if (writer != null) {
                     MappedRelationship mappedRelationship = new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), source.getClass(), ClassUtils.getType(writer.typeParameterDescriptor()));
@@ -457,7 +458,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
      * @return RelationalWriter or null if none exists
      */
     private RelationalWriter findIterableWriter(Object instance, Object parameter, String relationshipType, String relationshipDirection) {
-        ClassInfo classInfo = metadata.classInfo(instance);
+        ClassInfo classInfo = Neo4JOSGI.classInfo(metadata, instance);
         return EntityAccessManager.getIterableWriter(classInfo, parameter.getClass(), relationshipType, relationshipDirection);
     }
 
@@ -473,7 +474,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
      */
     private void mapOneToMany(Object instance, Class<?> valueType, Object values, String relationshipType, String relationshipDirection) {
 
-        ClassInfo classInfo = metadata.classInfo(instance);
+        ClassInfo classInfo = Neo4JOSGI.classInfo(metadata, instance);
 
         RelationalWriter writer = EntityAccessManager.getIterableWriter(classInfo, valueType, relationshipType, relationshipDirection);
         if (writer != null) {

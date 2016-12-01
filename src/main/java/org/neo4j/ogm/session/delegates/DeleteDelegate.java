@@ -15,6 +15,7 @@ package org.neo4j.ogm.session.delegates;
 import java.lang.reflect.Field;
 import java.util.*;
 
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.cypher.Filter;
 import org.neo4j.ogm.cypher.query.CypherQuery;
 import org.neo4j.ogm.cypher.query.DefaultRowModelRequest;
@@ -94,7 +95,7 @@ public class DeleteDelegate implements Capability.Delete {
 
         for (Object object : objects ) {
 
-            ClassInfo classInfo = session.metaData().classInfo(object);
+            ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), object);
 
             if (classInfo != null) {
 
@@ -139,7 +140,7 @@ public class DeleteDelegate implements Capability.Delete {
 
     @Override
     public <T> void deleteAll(Class<T> type) {
-        ClassInfo classInfo = session.metaData().classInfo(type.getName());
+        ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), type.getName());
         if (classInfo != null) {
             Statement request = getDeleteStatementsBasedOnType(type).delete(session.entityType(classInfo.name()));
             RowModelRequest query = new DefaultRowModelRequest(request.getStatement(), request.getParameters());
@@ -158,7 +159,7 @@ public class DeleteDelegate implements Capability.Delete {
     @Override
     public <T> Object delete(Class<T> clazz, Iterable<Filter> filters, boolean listResults) {
 
-        ClassInfo classInfo = session.metaData().classInfo(clazz.getSimpleName());
+        ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), clazz.getSimpleName());
 
         if (classInfo != null) {
 

@@ -14,6 +14,7 @@ package org.neo4j.ogm.utils;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.neo4j.ogm.MetaData;
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.entity.io.EntityAccessManager;
 import org.neo4j.ogm.entity.io.FieldReader;
 import org.neo4j.ogm.metadata.ClassInfo;
@@ -30,7 +31,7 @@ public class EntityUtils {
 
     public static Long identity(Object entity, MetaData metaData) {
 
-        ClassInfo classInfo = metaData.classInfo(entity);
+        ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, entity);
         Object id = EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(entity);
         return (id == null ? -System.identityHashCode(entity) : (Long) id);
     }
@@ -39,7 +40,7 @@ public class EntityUtils {
      * Returns the full set of labels, both static and dynamic, if any, to apply to a node.
      */
     public static Collection<String> labels(Object entity, MetaData metaData) {
-        ClassInfo classInfo = metaData.classInfo(entity);
+        ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, entity);
         Collection<String> staticLabels = classInfo.staticLabels();
         FieldInfo labelFieldInfo = classInfo.labelFieldOrNull();
         if (labelFieldInfo != null) {

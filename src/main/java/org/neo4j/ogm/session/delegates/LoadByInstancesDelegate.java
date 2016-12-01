@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.cypher.query.Pagination;
 import org.neo4j.ogm.cypher.query.SortOrder;
 import org.neo4j.ogm.entity.io.FieldWriter;
@@ -44,7 +45,7 @@ public class LoadByInstancesDelegate implements Capability.LoadByInstances {
 
         Set<Long> ids = new HashSet<>();
         Class type = objects.iterator().next().getClass();
-        ClassInfo classInfo = session.metaData().classInfo(type.getName());
+        ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), type.getName());
         Field identityField = classInfo.getField(classInfo.identityField());
 
         for (Object o: objects) {

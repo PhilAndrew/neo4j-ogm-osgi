@@ -16,6 +16,7 @@ package org.neo4j.ogm.service;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
+import org.neo4j.ogm.Neo4JOGM;
 import org.neo4j.ogm.compiler.Compiler;
 import org.neo4j.ogm.config.CompilerConfiguration;
 import org.neo4j.ogm.exception.ServiceNotFoundException;
@@ -48,20 +49,22 @@ abstract class CompilerService {
      * @return the named Driver if found, otherwise throws a ServiceNotFoundException
      */
     private static org.neo4j.ogm.compiler.Compiler load(String className) {
-
-        for (Compiler compiler : ServiceLoader.load(Compiler.class)) {
-            try {
-                if (compiler.getClass().getName().equals(className)) {
-                    return compiler;
+        if (Neo4JOGM.getContextList().size() == 0) {
+            for (Compiler compiler : ServiceLoader.load(Compiler.class)) {
+                try {
+                    if (compiler.getClass().getName().equals(className)) {
+                        return compiler;
+                    }
+                } catch (ServiceConfigurationError sce) {
+                    logger.warn("{}, reason: {}", sce.getLocalizedMessage(), sce.getCause());
                 }
-            } catch (ServiceConfigurationError sce) {
-                logger.warn("{}, reason: {}", sce.getLocalizedMessage(), sce.getCause());
             }
-        }
-
-        throw new ServiceNotFoundException("Compiler: " + className);
-
+            throw new ServiceNotFoundException("Compiler: " + className);
+        } else
+            // @todo I hard coded it, should really use the class loader
+            return new org.neo4j.ogm.compiler.MultiStatementCypherCompiler();
     }
+
 
     /**
      * Loads and initialises a Cypher Compiler using the specified CompilerConfiguration

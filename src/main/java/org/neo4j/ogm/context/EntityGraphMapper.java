@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.neo4j.ogm.MetaData;
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.compiler.CompileContext;
@@ -92,7 +93,7 @@ public class EntityGraphMapper implements EntityMapper {
         // and then ensure the relationship between the two is created or updated as necessary
         if (isRelationshipEntity(entity)) {
 
-            ClassInfo reInfo = metaData.classInfo(entity);
+            ClassInfo reInfo = Neo4JOSGI.classInfo(metaData, entity);
 
             Object startNode = EntityAccessManager.getStartNodeReader(reInfo).read(entity);
             if (startNode == null) {
@@ -120,8 +121,8 @@ public class EntityGraphMapper implements EntityMapper {
                 // 2. create or update the actual relationship (edge) in the graph
                 updateRelationshipEntity(compiler.context(), entity, relationshipBuilder, reInfo);
 
-                ClassInfo targetInfo = metaData.classInfo(endNode);
-                ClassInfo startInfo = metaData.classInfo(startNode);
+                ClassInfo targetInfo = Neo4JOSGI.classInfo(metaData, endNode);
+                ClassInfo startInfo = Neo4JOSGI.classInfo(metaData, startNode);
 
                 Long srcIdentity = (Long) EntityAccessManager.getIdentityPropertyReader(startInfo).readProperty(startNode);
                 Long tgtIdentity = (Long) EntityAccessManager.getIdentityPropertyReader(targetInfo).readProperty(endNode);
@@ -205,7 +206,7 @@ public class EntityGraphMapper implements EntityMapper {
 
         CompileContext context = compiler.context();
         // if this object is transient it won't have a classinfo, and isn't persistable
-        if (metaData.classInfo(entity) == null) {
+        if (Neo4JOSGI.classInfo(metaData, entity) == null) {
             return null;
         }
 
@@ -240,7 +241,7 @@ public class EntityGraphMapper implements EntityMapper {
         if (mappingContext.isDirty(entity)) {
             logger.debug("{} has changed", entity);
             context.register(entity);
-            ClassInfo classInfo = metaData.classInfo(entity);
+            ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, entity);
             Collection<PropertyReader> propertyReaders = EntityAccessManager.getPropertyReaders(classInfo);
             for (PropertyReader propertyReader : propertyReaders) {
                 if (propertyReader.isComposite()) {
@@ -256,7 +257,7 @@ public class EntityGraphMapper implements EntityMapper {
 
 //        if (mappingContext.isDirty(entity)) {
 //            context.register(entity);
-//            nodeBuilder.add(entity, metaData.classInfo(entity));
+//            nodeBuilder.add(entity, metaData.classInfoNeo4JOSGI(entity));
 //        } else {
 //            context.deregister(nodeBuilder);
 //        }
@@ -271,7 +272,7 @@ public class EntityGraphMapper implements EntityMapper {
      */
     private NodeBuilder getNodeBuilder(Compiler compiler, Object entity) {
 
-        ClassInfo classInfo = metaData.classInfo(entity);
+        ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, entity);
 
         // transient or subclass of transient will not have class info
         if (classInfo == null) {
@@ -324,7 +325,7 @@ public class EntityGraphMapper implements EntityMapper {
 
         logger.debug("mapping references declared by: {} ", entity);
 
-        ClassInfo srcInfo = metaData.classInfo(entity);
+        ClassInfo srcInfo = Neo4JOSGI.classInfo(metaData, entity);
 
         for (RelationalReader reader : EntityAccessManager.getRelationalReaders(srcInfo)) {
 
@@ -354,9 +355,9 @@ public class EntityGraphMapper implements EntityMapper {
                 // the directedRelationship object, or the incorrect edge type may be persisted.
 
                 if (isRelationshipEntity(relatedObject)) {
-                    ClassInfo declaredObjectInfo = metaData.classInfo(relationshipType);
+                    ClassInfo declaredObjectInfo = Neo4JOSGI.classInfo(metaData, relationshipType);
                     if (declaredObjectInfo.isAbstract()) {
-                        final ClassInfo relatedObjectClassInfo = metaData.classInfo(relatedObject);
+                        final ClassInfo relatedObjectClassInfo = Neo4JOSGI.classInfo(metaData, relatedObject);
                         if (!relatedObjectClassInfo.neo4jName().equals(directedRelationship.type())) {
                             directedRelationship = new DirectedRelationship(relatedObjectClassInfo.neo4jName(), directedRelationship.direction());
                             relationshipType = directedRelationship.type();
@@ -479,14 +480,14 @@ public class EntityGraphMapper implements EntityMapper {
         RelationshipBuilder relationshipBuilder;
 
         if (isRelationshipEntity(entity)) {
-            Long relId = (Long) EntityAccessManager.getIdentityPropertyReader(metaData.classInfo(entity)).readProperty(entity);
+            Long relId = (Long) EntityAccessManager.getIdentityPropertyReader(Neo4JOSGI.classInfo(metaData, entity)).readProperty(entity);
 
             boolean relationshipEndsChanged = haveRelationEndsChanged(entity, relId);
 
             if (relId == null || relationshipEndsChanged) { //if the RE itself is new, or it exists but has one of it's end nodes changed
                 relationshipBuilder = cypherBuilder.newRelationship(directedRelationship.type());
                 if (relationshipEndsChanged) {
-                    Field identityField = metaData.classInfo(entity).getField(metaData.classInfo(entity).identityField());
+                    Field identityField = Neo4JOSGI.classInfo(metaData, entity).getField(Neo4JOSGI.classInfo(metaData, entity).identityField());
                     FieldWriter.write(identityField, entity, null); //reset the ID to null
                 }
             } else {
@@ -513,14 +514,14 @@ public class EntityGraphMapper implements EntityMapper {
      * @return true if either end is new or changed
      */
     private boolean haveRelationEndsChanged(Object entity, Long relId) {
-        Object startEntity = getStartEntity(metaData.classInfo(entity), entity);
-        Object targetEntity = getTargetEntity(metaData.classInfo(entity), entity);
+        Object startEntity = getStartEntity(Neo4JOSGI.classInfo(metaData, entity), entity);
+        Object targetEntity = getTargetEntity(Neo4JOSGI.classInfo(metaData, entity), entity);
 
         if (startEntity == null || targetEntity == null) {
             throw new MappingException("Relationship entity " + entity + " cannot have a missing start or end node");
         }
-        ClassInfo targetInfo = metaData.classInfo(targetEntity);
-        ClassInfo startInfo = metaData.classInfo(startEntity);
+        ClassInfo targetInfo = Neo4JOSGI.classInfo(metaData, targetEntity);
+        ClassInfo startInfo = Neo4JOSGI.classInfo(metaData, startEntity);
         Long tgtIdentity = (Long) EntityAccessManager.getIdentityPropertyReader(targetInfo).readProperty(targetEntity);
         Long srcIdentity = (Long) EntityAccessManager.getIdentityPropertyReader(startInfo).readProperty(startEntity);
 
@@ -550,7 +551,7 @@ public class EntityGraphMapper implements EntityMapper {
 
         logger.debug("mapping relationshipEntity {}", relationshipEntity);
 
-        ClassInfo relEntityClassInfo = metaData.classInfo(relationshipEntity);
+        ClassInfo relEntityClassInfo = Neo4JOSGI.classInfo(metaData, relationshipEntity);
 
         // create or update the re's properties
         updateRelationshipEntity(context, relationshipEntity, relationshipBuilder, relEntityClassInfo);
@@ -558,8 +559,8 @@ public class EntityGraphMapper implements EntityMapper {
         Object startEntity = getStartEntity(relEntityClassInfo, relationshipEntity);
         Object targetEntity = getTargetEntity(relEntityClassInfo, relationshipEntity);
 
-        ClassInfo targetInfo = metaData.classInfo(targetEntity);
-        ClassInfo startInfo = metaData.classInfo(startEntity);
+        ClassInfo targetInfo = Neo4JOSGI.classInfo(metaData, targetEntity);
+        ClassInfo startInfo = Neo4JOSGI.classInfo(metaData, startEntity);
 
         Long tgtIdentity = (Long) EntityAccessManager.getIdentityPropertyReader(targetInfo).readProperty(targetEntity);
         Long srcIdentity = (Long) EntityAccessManager.getIdentityPropertyReader(startInfo).readProperty(startEntity);
@@ -719,7 +720,7 @@ public class EntityGraphMapper implements EntityMapper {
         // tgtNodeBuilder will be null if tgtObject is a transient class, or a subclass of a transient class
         if (tgtNodeBuilder != null) {
             logger.debug("trying to map relationship between {} and {}", relNodes.source, relNodes.target);
-            Long tgtIdentity = (Long) EntityAccessManager.getIdentityPropertyReader(metaData.classInfo(relNodes.target)).readProperty(relNodes.target);
+            Long tgtIdentity = (Long) EntityAccessManager.getIdentityPropertyReader(Neo4JOSGI.classInfo(metaData, relNodes.target)).readProperty(relNodes.target);
             CompileContext context = compiler.context();
             relNodes.targetId = tgtIdentity;
             updateRelationship(context, srcNodeBuilder, tgtNodeBuilder, relationshipBuilder, relNodes);
@@ -803,7 +804,7 @@ public class EntityGraphMapper implements EntityMapper {
             //If its a rel entity then we want to rebase the startClass to the @StartNode of the rel entity and the endClass to the rel entity
             if (metaData.isRelationshipEntity(tgtClass.getName())) {
                 srcClass = tgtClass;
-                String start = EntityAccessManager.getStartNodeReader(metaData.classInfo(tgtClass.getName())).typeDescriptor();
+                String start = EntityAccessManager.getStartNodeReader(Neo4JOSGI.classInfo(metaData, tgtClass.getName())).typeDescriptor();
                 tgtClass = ClassUtils.getType(start);
             }
             reallyCreateRelationship(context, tgt, relationshipBuilder, src, tgtClass, srcClass);
@@ -862,7 +863,7 @@ public class EntityGraphMapper implements EntityMapper {
      * @return true if the domain object is a RelationshipEntity, false otherwise
      */
     private boolean isRelationshipEntity(Object potentialRelationshipEntity) {
-        ClassInfo classInfo = metaData.classInfo(potentialRelationshipEntity);
+        ClassInfo classInfo = metaData.classInfoNeo4JOSGI(potentialRelationshipEntity, true);
         return classInfo != null && null != classInfo.annotationsInfo().get(RelationshipEntity.CLASS);
     }
 
@@ -882,7 +883,7 @@ public class EntityGraphMapper implements EntityMapper {
     private boolean bothWayMappingRequired(Object srcObject, String relationshipType, Object tgtObject, String relationshipDirection) {
         boolean mapBothWays = false;
 
-        ClassInfo tgtInfo = metaData.classInfo(tgtObject);
+        ClassInfo tgtInfo = metaData.classInfoNeo4JOSGI(tgtObject, true);
         for (RelationalReader tgtRelReader : EntityAccessManager.getRelationalReaders(tgtInfo)) {
             String tgtRelationshipDirection = tgtRelReader.relationshipDirection();
             if ((tgtRelationshipDirection.equals(Relationship.OUTGOING) || tgtRelationshipDirection.equals(Relationship.INCOMING)) //The relationship direction must be explicitly incoming or outgoing

@@ -38,6 +38,9 @@ import org.slf4j.LoggerFactory;
  * @author Luanne Misquitta
  */
 public class MetaData {
+    public ClassInfo classInfoMaybeWrongNeo4JOSGI(String name, Boolean queryForARealClass) {
+        return classInfoNeo4JOSGI(name, queryForARealClass);
+    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaData.class);
 
@@ -52,6 +55,14 @@ public class MetaData {
         domainInfo = new DomainInfo(classes);
     }
 
+    public ClassInfo classInfoNeo4JOSGI(String name) {
+        return classInfoNeo4JOSGI(name, true);
+    }
+
+    public ClassInfo classInfoNeo4JOSGI(Object name) {
+        return classInfoNeo4JOSGI(name, true);
+    }
+
     /**
      * Finds the ClassInfo for the supplied partial class name or label.
      *
@@ -60,7 +71,7 @@ public class MetaData {
      * @param name the simple class name or label for a class we want to find
      * @return A ClassInfo matching the supplied name, or null if it doesn't exist
      */
-    public ClassInfo classInfo(String name) {
+    public ClassInfo classInfoNeo4JOSGI(String name, Boolean queryForARealClass) {
         if (classInfos.containsKey(name)) {
             return classInfos.get(name);
         }
@@ -77,7 +88,7 @@ public class MetaData {
             return classInfo;
         }
 
-        classInfo = domainInfo.getClassSimpleName(name);
+        classInfo = domainInfo.getClassSimpleName(name, queryForARealClass);
         if (classInfo != null) {
             classInfos.put(name, classInfo);
             return classInfo;
@@ -92,11 +103,11 @@ public class MetaData {
     /**
      * Finds the ClassInfo for the supplied object by looking up its class name
      *
-     * @param object the class name whose classInfo we want to find
+     * @param object the class name whose classInfoNeo4JOSGI we want to find
      * @return A ClassInfo matching the supplied object's class, or null if it doesn't exist
      */
-    public ClassInfo classInfo(Object object) {
-        return classInfo(object.getClass().getName());
+    public ClassInfo classInfoNeo4JOSGI(Object object, Boolean queryForARealClass) {
+        return classInfoNeo4JOSGI(object.getClass().getName(), queryForARealClass);
     }
 
     private ClassInfo _classInfo(String name, String nodeEntityAnnotation, String annotationPropertyName) {
@@ -143,7 +154,7 @@ public class MetaData {
 
             for (String taxon : taxa) {
                 LOGGER.debug("looking for concrete class to resolve label: {}", taxon);
-                ClassInfo taxonClassInfo = classInfo(taxon);
+                ClassInfo taxonClassInfo = classInfoNeo4JOSGI(taxon, false);
 
                 // ignore any foreign labels
                 if (taxonClassInfo == null) {
@@ -151,11 +162,11 @@ public class MetaData {
                     continue;
                 }
 
-                // if classInfo is an interface or abstract there must be a single concrete implementing class/subclass
+                // if classInfoNeo4JOSGI is an interface or abstract there must be a single concrete implementing class/subclass
                 // if there is, use that, otherwise this label cannot be resolved
                 if (taxonClassInfo.isInterface()) {
                     LOGGER.debug("label is on an interface. Looking for a single implementing class...");
-                    taxonClassInfo = findSingleImplementor(taxon);
+                    taxonClassInfo = findSingleImplementor(taxon, true);
                 } else if (taxonClassInfo.isAbstract()) {
                     LOGGER.debug("label is on an abstract class. Looking for a single concrete subclass...");
                     taxonClassInfo = findFirstSingleConcreteClass(taxonClassInfo, taxonClassInfo.directSubclasses());
@@ -199,13 +210,17 @@ public class MetaData {
         return null;
     }
 
+    public Set<ClassInfo> classInfoByLabelOrType(String name) {
+        return classInfoByLabelOrType(name, true);
+    }
+
     /**
      * Finds ClassInfos for the supplied partial class name or label.
      *
      * @param name the simple class name or label for a class we want to find
      * @return A Set of ClassInfo matching the supplied name, or empty if it doesn't exist
      */
-    public Set<ClassInfo> classInfoByLabelOrType(String name) {
+    public Set<ClassInfo> classInfoByLabelOrType(String name, Boolean queryForARealClass) {
 
         Set<ClassInfo> classInfos = new HashSet<>();
 
@@ -219,7 +234,7 @@ public class MetaData {
             classInfos.add(info);
         }
 
-        classInfo = domainInfo.getClassSimpleName(name);
+        classInfo = domainInfo.getClassSimpleName(name, queryForARealClass);
         if (classInfo != null) {
             classInfos.add(classInfo);
         }
@@ -251,7 +266,7 @@ public class MetaData {
         // replace with its single implementing class - iff exactly one implementing class exists
         ClassInfo classInfo = classInfoList.iterator().next();
         if (classInfo.isInterface()) {
-            classInfo = findSingleImplementor(classInfo.name());
+            classInfo = findSingleImplementor(classInfo.name(), true);
         }
 
         // if we have a potential concrete class, keep going!
@@ -260,12 +275,16 @@ public class MetaData {
     }
 
     public boolean isRelationshipEntity(String className) {
-        ClassInfo classInfo = classInfo(className);
+        return isRelationshipEntity(className, true);
+    }
+
+    public boolean isRelationshipEntity(String className, Boolean queryForARealClass) {
+        ClassInfo classInfo = classInfoNeo4JOSGI(className, queryForARealClass);
         return classInfo != null && null != classInfo.annotationsInfo().get(RelationshipEntity.CLASS);
     }
 
-    private ClassInfo findSingleImplementor(String taxon) {
-        ClassInfo interfaceInfo = domainInfo.getClassInfoForInterface(taxon);
+    private ClassInfo findSingleImplementor(String taxon, Boolean queryForARealClass) {
+        ClassInfo interfaceInfo = domainInfo.getClassInfoForInterface(taxon, queryForARealClass);
         if(interfaceInfo!=null && interfaceInfo.directImplementingClasses()!=null && interfaceInfo.directImplementingClasses().size()==1) {
             return interfaceInfo.directImplementingClasses().get(0);
         }
@@ -276,9 +295,9 @@ public class MetaData {
         return domainInfo.getClassInfoMap().values();
     }
 
-    public String entityType(String name) {
-        ClassInfo classInfo = classInfo(name);
-        if(isRelationshipEntity(classInfo.name())) {
+    public String entityType(String name, Boolean queryForARealClass) {
+        ClassInfo classInfo = classInfoNeo4JOSGI(name, queryForARealClass);
+        if(isRelationshipEntity(classInfo.name(), queryForARealClass)) {
             AnnotationInfo annotation = classInfo.annotationsInfo().get(RelationshipEntity.CLASS);
             return annotation.get(RelationshipEntity.TYPE, classInfo.name());
         }

@@ -1,16 +1,9 @@
 package org.neo4j.ogm;
 
-import org.neo4j.ogm.exception.MappingException;
 import org.neo4j.ogm.metadata.*;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +11,14 @@ import java.util.Set;
 public class Neo4JOSGI {
 
     public static String modelPackagePath = null;
+
+    public static ClassInfo classInfo(MetaData metaData, String s) {
+        return metaData.classInfoNeo4JOSGI(s);
+    }
+
+    public static ClassInfo classInfo(MetaData metaData, Object o) {
+        return metaData.classInfoNeo4JOSGI(o);
+    }
 
     public static ClassInfo getClassInfo(String fullOrPartialClassName, Boolean queryForARealClass, Map<String, ClassInfo> infos) {
         if ((modelPackagePath!=null) && (!queryForARealClass))

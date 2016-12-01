@@ -461,7 +461,7 @@ public class ClassInfo {
      * A property field is any field annotated with @Property, or any field that can be mapped to a
      * node property. The identity field is not a property field.
      *
-     * @return A Collection of FieldInfo objects describing the classInfo's property fields
+     * @return A Collection of FieldInfo objects describing the classInfoNeo4JOSGI's property fields
      */
     public Collection<FieldInfo> propertyFields() {
         if (fieldInfos == null) {
@@ -537,7 +537,7 @@ public class ClassInfo {
      * A relationship field is any field annotated with @Relationship, or any field that cannot be mapped to a
      * node property. The identity field is not a relationship field.
      *
-     * @return A Collection of FieldInfo objects describing the classInfo's relationship fields
+     * @return A Collection of FieldInfo objects describing the classInfoNeo4JOSGI's relationship fields
      */
     public Collection<FieldInfo> relationshipFields() {
         FieldInfo identityField = identityFieldOrNull();
@@ -682,7 +682,7 @@ public class ClassInfo {
      * A property getter is any getter annotated with @Property, or any getter whose return type can be mapped to a
      * node property. The identity getter is not a property getter.
      *
-     * @return A Collection of MethodInfo objects describing the classInfo's property getters
+     * @return A Collection of MethodInfo objects describing the classInfoNeo4JOSGI's property getters
      */
     public Collection<MethodInfo> propertyGetters() {
         MethodInfo identityGetter = identityGetter();
@@ -706,7 +706,7 @@ public class ClassInfo {
      * A property setter is any setter annotated with @Property, or any setter whose parameter type can be mapped to a
      * node property. The identity setter is not a property setter.
      *
-     * @return A Collection of MethodInfo objects describing the classInfo's property setters
+     * @return A Collection of MethodInfo objects describing the classInfoNeo4JOSGI's property setters
      */
     public Collection<MethodInfo> propertySetters() {
         MethodInfo identitySetter = identitySetter();
@@ -734,7 +734,7 @@ public class ClassInfo {
      * A relationship getter is any getter annotated with @Relationship, or any getter whose return type cannot be mapped to a
      * node property. The identity getter is not a property getter.
      *
-     * @return A Collection of MethodInfo objects describing the classInfo's property getters
+     * @return A Collection of MethodInfo objects describing the classInfoNeo4JOSGI's property getters
      */
     public Collection<MethodInfo> relationshipGetters() {
         MethodInfo identityGetter = identityGetter();
@@ -758,7 +758,7 @@ public class ClassInfo {
      * A relationship setter is any setter annotated with @Relationship, or any setter whose parameter type cannot be mapped to a
      * node property. The identity setter is not a property getter.
      *
-     * @return A Collection of MethodInfo objects describing the classInfo's property getters
+     * @return A Collection of MethodInfo objects describing the classInfoNeo4JOSGI's property getters
      */
     public Collection<MethodInfo> relationshipSetters() {
         MethodInfo identitySetter = identitySetter();
@@ -1226,10 +1226,10 @@ public class ClassInfo {
     }
 
     /**
-     * Returns true if this classInfo is in the subclass hierarchy of b, or if this classInfo is the same as b, false otherwise
+     * Returns true if this classInfoNeo4JOSGI is in the subclass hierarchy of b, or if this classInfoNeo4JOSGI is the same as b, false otherwise
      *
-     * @param classInfo the classInfo at the toplevel of a type hierarchy to search through
-     * @return true if this classInfo is in the subclass hierarchy of classInfo, false otherwise
+     * @param classInfo the classInfoNeo4JOSGI at the toplevel of a type hierarchy to search through
+     * @return true if this classInfoNeo4JOSGI is in the subclass hierarchy of classInfoNeo4JOSGI, false otherwise
      */
     public boolean isSubclassOf(ClassInfo classInfo) {
 

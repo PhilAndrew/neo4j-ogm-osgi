@@ -12,6 +12,7 @@
  */
 package org.neo4j.ogm.session.delegates;
 
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.cypher.query.PagingAndSortingQuery;
 import org.neo4j.ogm.cypher.query.Pagination;
@@ -95,7 +96,7 @@ public class LoadByIdsDelegate implements Capability.LoadByIds {
     private <T> Collection<T> lookup(Class<T> type, Collection<Long> ids) {
 
         Set<T> results = new HashSet<>();
-        ClassInfo typeInfo = session.metaData().classInfo(type.getName());
+        ClassInfo typeInfo = Neo4JOSGI.classInfo(session.metaData(), type.getName());
 
         for (Long id : ids) {
 

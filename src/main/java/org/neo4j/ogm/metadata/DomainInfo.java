@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
 import org.neo4j.ogm.exception.MappingException;
 import org.neo4j.ogm.scanner.ClassPathScanner;
@@ -266,11 +267,11 @@ public class DomainInfo implements ClassFileProcessor {
 
     @Override
     public void process(final InputStream inputStream) throws IOException {
+/*
+        ClassInfo classInfoNeo4JOSGI = new ClassInfo(inputStream);
 
-        ClassInfo classInfo = new ClassInfo(inputStream);
-
-        String className = classInfo.name();
-        String superclassName = classInfo.superclassName();
+        String className = classInfoNeo4JOSGI.name();
+        String superclassName = classInfoNeo4JOSGI.superclassName();
 
         LOGGER.debug("Processing: {} -> {}", className, superclassName);
 
@@ -279,13 +280,13 @@ public class DomainInfo implements ClassFileProcessor {
             ClassInfo thisClassInfo = classNameToClassInfo.get(className);
 
             if (thisClassInfo == null) {
-                thisClassInfo = classInfo;
+                thisClassInfo = classInfoNeo4JOSGI;
                 classNameToClassInfo.put(className, thisClassInfo);
             }
 
             if (!thisClassInfo.hydrated()) {
 
-                thisClassInfo.hydrate(classInfo);
+                thisClassInfo.hydrate(classInfoNeo4JOSGI);
 
                 ClassInfo superclassInfo = classNameToClassInfo.get(superclassName);
                 if (superclassInfo == null) {
@@ -299,7 +300,13 @@ public class DomainInfo implements ClassFileProcessor {
                 LOGGER.debug("Registering enum class: {}", thisClassInfo.name());
                 enumTypes.add(thisClassInfo.getUnderlyingClass());
             }
-        }
+        }*/
+    }
+
+    @Override
+    public void processClass(Class c) throws IOException {
+        // @todo Philip is this doing anything?
+        ClassInfo classInfo = new ClassInfo(c);
     }
 
     private void load(Class... classes) {
@@ -335,7 +342,7 @@ public class DomainInfo implements ClassFileProcessor {
             classPaths.add(path);
         }
 
-        new ClassPathScanner().scan(classPaths, this);
+        //new ClassPathScanner().scan(classPaths, this);
     }
 
     public ClassInfo getClass(String fqn) {
@@ -343,19 +350,23 @@ public class DomainInfo implements ClassFileProcessor {
     }
 
     // all classes, including interfaces will be registered in classNameToClassInfo map
-    public ClassInfo getClassSimpleName(String fullOrPartialClassName) {
-        return getClassInfo(fullOrPartialClassName, classNameToClassInfo);
+    public ClassInfo getClassSimpleName(String fullOrPartialClassName, Boolean queryForARealClass) {
+        return getClassInfo(fullOrPartialClassName, queryForARealClass, classNameToClassInfo);
     }
 
 
-    public ClassInfo getClassInfoForInterface(String fullOrPartialClassName) {
-        ClassInfo classInfo = getClassSimpleName(fullOrPartialClassName);
+    public ClassInfo getClassInfoForInterface(String fullOrPartialClassName, Boolean classNameToClassInfo) {
+        ClassInfo classInfo = getClassSimpleName(fullOrPartialClassName, classNameToClassInfo);
         if (classInfo != null && classInfo.isInterface()) {
             return classInfo;
         }
         return null;
     }
 
+    private ClassInfo getClassInfo(String fullOrPartialClassName, Boolean queryForARealClass, Map<String, ClassInfo> infos) {
+        return Neo4JOSGI.getClassInfo(fullOrPartialClassName, queryForARealClass, infos);
+    }
+    /*
     private ClassInfo getClassInfo(String fullOrPartialClassName, Map<String, ClassInfo> infos) {
         ClassInfo match = null;
         for (String fqn : infos.keySet()) {
@@ -368,7 +379,7 @@ public class DomainInfo implements ClassFileProcessor {
             }
         }
         return match;
-    }
+    }*/
 
     public List<ClassInfo> getClassInfosWithAnnotation(String annotation) {
         return annotationNameToClassInfo.get(annotation);

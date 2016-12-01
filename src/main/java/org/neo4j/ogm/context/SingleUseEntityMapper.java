@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.neo4j.ogm.MetaData;
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.entity.io.*;
 import org.neo4j.ogm.exception.MappingException;
 import org.neo4j.ogm.metadata.ClassInfo;
@@ -88,7 +89,7 @@ public class SingleUseEntityMapper {
 	}
 
 	private ClassInfo resolveClassInfoFor(Class<?> type) {
-		ClassInfo classInfo = this.metadata.classInfo(type.getSimpleName());
+		ClassInfo classInfo = Neo4JOSGI.classInfo(metadata, type.getSimpleName());
 		if (classInfo != null) {
 			return classInfo;
 		}

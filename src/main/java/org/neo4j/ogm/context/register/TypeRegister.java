@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.neo4j.ogm.MetaData;
+import org.neo4j.ogm.Neo4JOSGI;
 
 /**
  * The TypeRegister maintains the list of active objects ids in the session, mapping each object id to its type hierarchy.
@@ -43,7 +44,7 @@ public class TypeRegister {
         Map<Object, Object> entities = register.get(type);
 
         if (entities != null) {
-            if (type.getSuperclass() != null && metaData != null && metaData.classInfo(type.getSuperclass().getName()) != null && !type.getSuperclass().getName().equals("java.lang.Object")) {
+            if (type.getSuperclass() != null && metaData != null && Neo4JOSGI.classInfo(metaData, type.getSuperclass().getName()) != null && !type.getSuperclass().getName().equals("java.lang.Object")) {
                 entities.remove(id);
                 remove(metaData, type.getSuperclass(), id);
             }
@@ -79,14 +80,14 @@ public class TypeRegister {
         objectMap(type).put(id, entity);
         if (type.getSuperclass() != null
                 && metaData != null
-                && metaData.classInfo(type.getSuperclass().getName()) != null
+                && Neo4JOSGI.classInfo(metaData, type.getSuperclass().getName()) != null
                 && !type.getSuperclass().getName().equals("java.lang.Object")) {
             add(metaData, type.getSuperclass(), entity, id);
         }
         if (type.getInterfaces() != null
                 && metaData != null) {
             for (Class interfaceClass : type.getInterfaces()) {
-                if (metaData.classInfo(interfaceClass.getName()) != null) {
+                if (Neo4JOSGI.classInfo(metaData, interfaceClass.getName()) != null) {
                     add(metaData, interfaceClass, entity, id);
                 }
             }

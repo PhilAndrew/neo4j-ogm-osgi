@@ -45,7 +45,7 @@ public class LoadOneDelegate implements Capability.LoadOne {
     @Override
     public <T, U> T load(Class<T> type, U id, int depth) {
 
-        final FieldInfo primaryIndexField = session.metaData().classInfo(type.getName()).primaryIndexField();
+        final FieldInfo primaryIndexField = session.metaData().classInfoMaybeWrongNeo4JOSGI(type.getName(), true).primaryIndexField();
         if (primaryIndexField != null && !primaryIndexField.isTypeOf(id.getClass())) {
             throw new Neo4jException("Supplied id does not match primary index type on supplied class.");
         }
@@ -61,7 +61,7 @@ public class LoadOneDelegate implements Capability.LoadOne {
 
     private <T, U> T lookup(Class<T> type, U id) {
         Object ref;
-        ClassInfo typeInfo = session.metaData().classInfo(type.getName());
+        ClassInfo typeInfo = session.metaData().classInfoMaybeWrongNeo4JOSGI(type.getName(), true);
 
         if (typeInfo.annotationsInfo().get(RelationshipEntity.CLASS) == null) {
             ref = session.context().getNodeEntity(id);

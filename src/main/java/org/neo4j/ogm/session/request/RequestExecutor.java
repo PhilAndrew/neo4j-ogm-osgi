@@ -17,6 +17,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.compiler.CompileContext;
 import org.neo4j.ogm.compiler.Compiler;
@@ -182,7 +183,7 @@ public class RequestExecutor {
 		// Ensures the last saved version of existing nodes is current in the cache
 		for (Object obj : context.registry()) {
 			if (!(obj instanceof TransientRelationship)) {
-				ClassInfo classInfo = session.metaData().classInfo(obj);
+				ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), obj);
 				if (!classInfo.isRelationshipEntity()) {
 					PropertyReader idReader = EntityAccessManager.getIdentityPropertyReader(classInfo);
 					Long id = (Long) idReader.readProperty(obj);
@@ -222,7 +223,7 @@ public class RequestExecutor {
 				// not all relationship ids represent relationship entities
 			    if (existingRelationshipEntity != null) {
 					LOGGER.debug("updating existing relationship entity id: {}", referenceMapping.id);
-					ClassInfo classInfo = session.metaData().classInfo(existingRelationshipEntity);
+					ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), existingRelationshipEntity);
 					registerEntity(session.context(), classInfo, referenceMapping.id, existingRelationshipEntity);
 				}
 			} else {
@@ -337,7 +338,7 @@ public class RequestExecutor {
 		Transaction tx = session.getTransaction();
 		if (persisted != null) {  // it will be null if the variable represents a simple relationship.
 			// set the id field of the newly created domain object
-			ClassInfo classInfo = session.metaData().classInfo(persisted);
+			ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), persisted);
 			Field identityField = classInfo.getField(classInfo.identityField());
 			FieldWriter.write(identityField, persisted, identity);
 
