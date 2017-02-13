@@ -1,7 +1,7 @@
 
 name := "neo4j-ogm-osgi"
 
-version := "1.4.37"
+version := "1.4.38"
 
 scalaVersion := "2.11.8"
 
@@ -49,3 +49,21 @@ libraryDependencies += "commons-codec" % "commons-codec" % "1.10"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.4"
 
 libraryDependencies += "org.apache.commons" % "commons-collections4" % "4.1"
+
+
+
+
+bintrayRepository := "org.philandrew"
+
+bintrayPackage := "neo4j-ogm-osgi"
+
+bintrayOrganization := Some("philandrew") // The organization is not the same as the username I logged into bintray with
+
+//publishMavenStyle := true // true or false, it still published
+
+publishMavenStyle := false
+
+licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
+
+bintrayReleaseOnPublish in ThisBuild := true // true or false, it still published
+
