@@ -1,4 +1,17 @@
 
+### How to use in SBT
+
+Add bintray resolver in build.sbt
+
+    resolvers ++= Seq(
+      Resolver.bintrayIvyRepo(owner = "philandrew", repo = "org.philandrew"))
+
+
+In the program which uses this, you can specify in build.sbt dependencies.
+
+    "universe" % "neo4j-ogm-osgi_2.11" % "1.4.38"
+
+
 ### Copyright
 
 All copyright of the code written by Neo4J belongs to Neo4J and you should refer to them for any copyright issue. Refer to Neo4J OGM [Neo4J OGM](https://github.com/neo4j/neo4j-ogm).
@@ -15,7 +28,9 @@ Here it is assumed you are using [SBT Osgi Felix](https://github.com/doolse/sbt-
 
 This could easily be adapted to produce an OSGi bundle but I wish to use this code within my SBT Osgi Felix project. Create an issue and ask me if you want to know how to make an OSGi bundle.
  
-Its not tied to Scala, I just want to use SBT to build the project as it is simple to use built.sbt. You can use this from Java as well. 
+Its not tied to Scala, I just want to use SBT to build the project as it is simple to use built.sbt. You can use this from Java as well.
+ 
+### If you want to develop locally, publishLocal
 
 Git clone, to use it in your OSGi project. Run this in this project
 
@@ -25,7 +40,7 @@ Now it is in the local repository on this computer.
 
 In the program which uses this, you can specify in build.sbt dependencies.
 
-    "universe" % "neo4j-ogm-osgi_2.11" % "1.4.36"
+    "universe" % "neo4j-ogm-osgi_2.11" % "1.4.38"
 
 Your code must call the following in your bundle startup to set the bundle context within Neo4JOGM to allow it to use the OSGi classloader to find your model classes. Must be the first thing your code does.
 
