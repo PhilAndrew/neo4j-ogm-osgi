@@ -1,4 +1,8 @@
 
+### What does it do?
+
+This is Neo4J OGM Object to Graph Mapper working in OSGi as a library. It is not tested, but it happens to work, good luck if it works for you.
+
 ### How to use in SBT
 
 Add bintray resolver in build.sbt
