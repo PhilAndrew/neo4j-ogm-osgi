@@ -13,22 +13,20 @@
 
 package org.neo4j.ogm.driver;
 
-import org.neo4j.ogm.config.DriverConfiguration;
+import org.neo4j.ogm.config.Configuration;
 import org.neo4j.ogm.request.Request;
-import org.neo4j.ogm.service.LoadableService;
 import org.neo4j.ogm.transaction.Transaction;
 import org.neo4j.ogm.transaction.TransactionManager;
 
 /**
- * @author vince
+ * @author Vince Bickers
+ * @author Mark Angrish
  */
-public interface Driver extends AutoCloseable, LoadableService {
+public interface Driver extends AutoCloseable {
 
-    void configure(DriverConfiguration config);
+    void configure(Configuration config);
 
-    Transaction newTransaction();
-
-    Transaction newTransaction(Transaction.Type type);
+    Transaction newTransaction(Transaction.Type type, String bookmark);
 
     void close();
 
@@ -36,5 +34,5 @@ public interface Driver extends AutoCloseable, LoadableService {
 
     void setTransactionManager(TransactionManager tx);
 
-    DriverConfiguration getConfiguration();
+    Configuration getConfiguration();
 }

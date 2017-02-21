@@ -15,7 +15,9 @@ package org.neo4j.ogm.session.request;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.annotation.RelationshipEntity;
@@ -183,7 +185,7 @@ public class RequestExecutor {
 		// Ensures the last saved version of existing nodes is current in the cache
 		for (Object obj : context.registry()) {
 			if (!(obj instanceof TransientRelationship)) {
-				ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), obj);
+                ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), obj);
 				if (!classInfo.isRelationshipEntity()) {
 					PropertyReader idReader = EntityAccessManager.getIdentityPropertyReader(classInfo);
 					Long id = (Long) idReader.readProperty(obj);
@@ -223,7 +225,7 @@ public class RequestExecutor {
 				// not all relationship ids represent relationship entities
 			    if (existingRelationshipEntity != null) {
 					LOGGER.debug("updating existing relationship entity id: {}", referenceMapping.id);
-					ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), existingRelationshipEntity);
+                    ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), existingRelationshipEntity);
 					registerEntity(session.context(), classInfo, referenceMapping.id, existingRelationshipEntity);
 				}
 			} else {
@@ -311,20 +313,36 @@ public class RequestExecutor {
 	 * @param relRefMappings mapping of relationship reference used in the compile context and the relationship id from the database
 	 */
 	private void updateRelationships(CompileContext context, Neo4jSession session, List<ReferenceMapping> relRefMappings) {
+		final Map<Long, TransientRelationship> registeredTransientRelationshipIndex = buildRegisteredTransientRelationshipIndex(context);
 		for (ReferenceMapping referenceMapping : relRefMappings) {
-			for (Object obj : context.registry()) {
-				if (obj instanceof TransientRelationship) {
-					TransientRelationship transientRelationship = (TransientRelationship) obj;
-					if (referenceMapping.ref.equals(transientRelationship.getRef())) {
-						MappedRelationship mappedRelationship = new MappedRelationship(context.getId(transientRelationship.getSrc()), transientRelationship.getRel(), context.getId(transientRelationship.getTgt()), transientRelationship.getSrcClass(), transientRelationship.getTgtClass());
-						if (session.context().getRelationshipEntity(referenceMapping.id) != null) {
-							mappedRelationship.setRelationshipId(referenceMapping.id);
-						}
-						session.context().addRelationship(mappedRelationship);
-					}
+			if (registeredTransientRelationshipIndex.containsKey(referenceMapping.ref)) {
+				TransientRelationship transientRelationship = registeredTransientRelationshipIndex.get(referenceMapping.ref);
+				MappedRelationship mappedRelationship = new MappedRelationship(context.getId(transientRelationship.getSrc()), transientRelationship.getRel(), context.getId(transientRelationship.getTgt()), transientRelationship.getSrcClass(), transientRelationship.getTgtClass());
+				if (session.context().getRelationshipEntity(referenceMapping.id) != null) {
+					mappedRelationship.setRelationshipId(referenceMapping.id);
 				}
+				session.context().addRelationship(mappedRelationship);
 			}
 		}
+	}
+	
+	/**
+	 * Append {@link TransientRelationship} of {@link CompileContext} to an index.
+	 * 
+	 * @param context the compile context
+	 * @return an index of {@link TransientRelationship} 
+	 */
+	private Map<Long, TransientRelationship> buildRegisteredTransientRelationshipIndex(CompileContext context) {
+		final Map<Long, TransientRelationship> transientRelationshipIndex = new HashMap<>();
+		
+		for (Object obj : context.registry()) {
+			if(TransientRelationship.class.isAssignableFrom(obj.getClass())) {
+				TransientRelationship transientRelationship = (TransientRelationship) obj;
+				transientRelationshipIndex.put(transientRelationship.getRef(), transientRelationship);
+			}
+		}
+		
+		return transientRelationshipIndex;
 	}
 
 	/**
@@ -338,7 +356,7 @@ public class RequestExecutor {
 		Transaction tx = session.getTransaction();
 		if (persisted != null) {  // it will be null if the variable represents a simple relationship.
 			// set the id field of the newly created domain object
-			ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), persisted);
+            ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), persisted);
 			Field identityField = classInfo.getField(classInfo.identityField());
 			FieldWriter.write(identityField, persisted, identity);
 

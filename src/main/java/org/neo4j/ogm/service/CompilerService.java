@@ -18,7 +18,6 @@ import java.util.ServiceLoader;
 
 import org.neo4j.ogm.Neo4JOGM;
 import org.neo4j.ogm.compiler.Compiler;
-import org.neo4j.ogm.config.CompilerConfiguration;
 import org.neo4j.ogm.exception.ServiceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,15 +65,5 @@ abstract class CompilerService {
     }
 
 
-    /**
-     * Loads and initialises a Cypher Compiler using the specified CompilerConfiguration
-     *
-     * @param configuration an instance of {@link CompilerConfiguration} with which to configure the driver
-     * @return the named {@link Compiler} if found, otherwise throws a ServiceNotFoundException
-     */
-    public static Compiler load(CompilerConfiguration configuration) {
-        String compilerClassName = configuration.getCompilerClassName();
-        return load(compilerClassName);
-    }
 
 }

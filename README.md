@@ -15,7 +15,7 @@ Add bintray resolver in build.sbt
 
 In the program which uses this, you can specify in build.sbt dependencies.
 
-    "universe" % "neo4j-ogm-osgi_2.11" % "1.4.38"
+    "universe" % "neo4j-ogm-osgi_2.11" % "1.4.39"
 
 
 ### Copyright

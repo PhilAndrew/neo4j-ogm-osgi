@@ -297,7 +297,7 @@ public class MappingContext {
         Long id = (Long) identityReader.readProperty(entity);
 
         if (id != null) {
-            if (!metaData.isRelationshipEntity(type.getName())) {
+            if (!metaData.isRelationshipEntityNeo4J(type.getName(), true)) {
                 if (nodeEntityRegister.contains(id)) {
                     // todo: this will be very slow for many objects
                     // todo: refactor to create a list of mappedRelationships from a nodeEntity id.
@@ -362,14 +362,12 @@ public class MappingContext {
         Long id = (Long) identityReader.readProperty(entity);
         if (id != null) {
             // remove a NodeEntity
-            if (!metaData.isRelationshipEntity(type.getName())) {
+            if (!metaData.isRelationshipEntityNeo4J(type.getName(), true)) {
                 if (nodeEntityRegister.contains(id)) {
                     // remove the object from the node register
                     nodeEntityRegister.remove(id);
                     // remove all relationship mappings to/from this object
-                    Iterator<MappedRelationship> mappedRelationshipIterator = relationshipRegister.iterator();
-                    while (mappedRelationshipIterator.hasNext()) {
-                        MappedRelationship mappedRelationship = mappedRelationshipIterator.next();
+                    for (MappedRelationship mappedRelationship : relationshipRegister) {
                         if (mappedRelationship.getStartNodeId() == id || mappedRelationship.getEndNodeId() == id) {
 
                             // first purge any RE mappings (if its a RE)

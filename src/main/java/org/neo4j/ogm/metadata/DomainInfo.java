@@ -268,25 +268,20 @@ public class DomainInfo implements ClassFileProcessor {
     @Override
     public void process(final InputStream inputStream) throws IOException {
 /*
-        ClassInfo classInfoNeo4JOSGI = new ClassInfo(inputStream);
+        ClassInfo classInfo = new ClassInfo(inputStream);
 
-        String className = classInfoNeo4JOSGI.name();
-        String superclassName = classInfoNeo4JOSGI.superclassName();
+        String className = classInfo.name();
+        String superclassName = classInfo.superclassName();
 
         LOGGER.debug("Processing: {} -> {}", className, superclassName);
 
         if (className != null) {
 
-            ClassInfo thisClassInfo = classNameToClassInfo.get(className);
-
-            if (thisClassInfo == null) {
-                thisClassInfo = classInfoNeo4JOSGI;
-                classNameToClassInfo.put(className, thisClassInfo);
-            }
+            ClassInfo thisClassInfo = classNameToClassInfo.computeIfAbsent(className, k -> classInfo);
 
             if (!thisClassInfo.hydrated()) {
 
-                thisClassInfo.hydrate(classInfoNeo4JOSGI);
+                thisClassInfo.hydrate(classInfo);
 
                 ClassInfo superclassInfo = classNameToClassInfo.get(superclassName);
                 if (superclassInfo == null) {

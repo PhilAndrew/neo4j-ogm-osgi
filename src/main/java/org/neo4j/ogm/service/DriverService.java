@@ -13,7 +13,6 @@
 
 package org.neo4j.ogm.service;
 
-import org.neo4j.ogm.config.DriverConfiguration;
 import org.neo4j.ogm.driver.Driver;
 import org.neo4j.ogm.exception.ServiceNotFoundException;
 import org.slf4j.Logger;
@@ -53,16 +52,4 @@ public class DriverService {
 
     }
 
-    /**
-     * Loads and initialises a Driver using the specified DriverConfiguration
-     *
-     * @param configuration an instance of {@link DriverConfiguration} with which to configure the driver
-     * @return the named {@link Driver} if found, otherwise throws a ServiceNotFoundException
-     */
-    public static Driver load(DriverConfiguration configuration) {
-        String driverClassName = configuration.getDriverClassName();
-        Driver driver = load(driverClassName);
-        driver.configure(configuration);
-        return driver;
-    }
 }

@@ -52,7 +52,7 @@ class EntityMemo {
      * @param classInfo metadata about the object
      */
     public void remember(Long entityId, Object object, ClassInfo classInfo) {
-        if (metaData.isRelationshipEntity(classInfo.name())) {
+        if (metaData.isRelationshipEntityNeo4J(classInfo.name(), true)) {
             relEntityHash.put(entityId, hash(object, classInfo));
         } else {
             nodeHash.put(entityId, hash(object, classInfo));
@@ -74,7 +74,7 @@ class EntityMemo {
         boolean isRelEntity = false;
 
         if (entityId != null) {
-            if (metaData.isRelationshipEntity(classInfo.name())) {
+            if (metaData.isRelationshipEntityNeo4J(classInfo.name(), true)) {
                 isRelEntity = true;
             }
 

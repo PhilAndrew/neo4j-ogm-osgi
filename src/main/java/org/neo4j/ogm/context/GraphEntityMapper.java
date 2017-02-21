@@ -14,6 +14,9 @@
 package org.neo4j.ogm.context;
 
 
+import static org.neo4j.ogm.annotation.Relationship.*;
+import static org.neo4j.ogm.entity.io.EntityAccessManager.*;
+
 import java.util.*;
 
 import org.neo4j.ogm.MetaData;
@@ -236,7 +239,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
         String edgeLabel = edge.getType();
         ClassInfo sourceInfo = Neo4JOSGI.classInfo(metadata, source);
 
-        RelationalWriter writer = EntityAccessManager.getRelationalWriter(sourceInfo, edgeLabel, relationshipDirection, parameter);
+        RelationalWriter writer = getRelationalWriter(sourceInfo, edgeLabel, relationshipDirection, parameter);
         if (writer != null && writer.forScalar()) {
             writer.write(source, parameter);
             return true;
@@ -278,7 +281,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
     private void mapRelationship(List<Edge> oneToMany, Edge edge, Object source, Object target) {
         boolean oneToOne;
         //Since source=start node, end=end node, the direction from source->target has to be outgoing, try mapping it
-        oneToOne = tryMappingAsSingleton(source, target, edge, Relationship.OUTGOING);
+        oneToOne = tryMappingAsSingleton(source, target, edge, OUTGOING);
 
         //Try mapping the incoming relation on the end node, target
         oneToOne &= tryMappingAsSingleton(target, source, edge, Relationship.INCOMING);
@@ -287,7 +290,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
         if (!oneToOne) {
             oneToMany.add(edge);
         } else {
-            RelationalWriter writer = EntityAccessManager.getRelationalWriter(Neo4JOSGI.classInfo(metadata, source), edge.getType(), Relationship.OUTGOING, target);
+            RelationalWriter writer = getRelationalWriter(Neo4JOSGI.classInfo(metadata, source), edge.getType(), OUTGOING, target);
             mappingContext.addRelationship(new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), source.getClass(), ClassUtils.getType(writer.typeParameterDescriptor())));
         }
     }
@@ -305,7 +308,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 
         // If the source has a writer for an outgoing relationship for the rel entity, then write the rel entity on the source if it's a scalar writer
         ClassInfo sourceInfo = Neo4JOSGI.classInfo(metadata, source);
-        RelationalWriter writer = EntityAccessManager.getRelationalWriter(sourceInfo, edge.getType(), Relationship.OUTGOING, relationshipEntity);
+        RelationalWriter writer = getRelationalWriter(sourceInfo, edge.getType(), OUTGOING, relationshipEntity);
         if (writer == null) {
             logger.debug("No writer for {}", target);
         } else {
@@ -319,7 +322,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 
         //If the target has a writer for an incoming relationship for the rel entity, then write the rel entity on the target if it's a scalar writer
         ClassInfo targetInfo = Neo4JOSGI.classInfo(metadata, target);
-        writer = EntityAccessManager.getRelationalWriter(targetInfo, edge.getType(), Relationship.INCOMING, relationshipEntity);
+        writer = getRelationalWriter(targetInfo, edge.getType(), Relationship.INCOMING, relationshipEntity);
 
         if (writer == null) {
             logger.debug("No writer for {}", target);
@@ -347,14 +350,14 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
         // set the start and end entities
         ClassInfo relEntityInfo = Neo4JOSGI.classInfo(metadata, relationshipEntity);
 
-        RelationalWriter startNodeWriter = EntityAccessManager.getRelationalEntityWriter(relEntityInfo, StartNode.class);
+        RelationalWriter startNodeWriter = EntityAccessManager.getStartOrEndNodeWriter(relEntityInfo, StartNode.class);
         if (startNodeWriter != null) {
             startNodeWriter.write(relationshipEntity, startEntity);
         } else {
             throw new RuntimeException("Cannot find a writer for the StartNode of relational entity " + relEntityInfo.name());
         }
 
-        RelationalWriter endNodeWriter = EntityAccessManager.getRelationalEntityWriter(relEntityInfo, EndNode.class);
+        RelationalWriter endNodeWriter = EntityAccessManager.getStartOrEndNodeWriter(relEntityInfo, EndNode.class);
         if (endNodeWriter != null) {
             endNodeWriter.write(relationshipEntity, endEntity);
         } else {
@@ -380,9 +383,9 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
             Object relationshipEntity = mappingContext.getRelationshipEntity(edge.getId());
             if (relationshipEntity != null) {
                 // establish a relationship between
-                RelationalWriter outgoingWriter = findIterableWriter(instance, relationshipEntity, edge.getType(), Relationship.OUTGOING);
+                RelationalWriter outgoingWriter = findIterableWriter(instance, relationshipEntity, edge.getType(), OUTGOING);
                 if (outgoingWriter != null) {
-                    entityCollector.recordTypeRelationship(edge.getStartNode(), relationshipEntity, edge.getType(), Relationship.OUTGOING);
+                    entityCollector.recordTypeRelationship(edge.getStartNode(), relationshipEntity, edge.getType(), OUTGOING);
                     relationshipsToRegister.add(new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), instance.getClass(), ClassUtils.getType(outgoingWriter.typeParameterDescriptor())));
                 }
                 RelationalWriter incomingWriter = findIterableWriter(parameter, relationshipEntity, edge.getType(), Relationship.INCOMING);
@@ -394,9 +397,9 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
                     registeredEdges.add(edge);
                 }
             } else {
-                RelationalWriter outgoingWriter = findIterableWriter(instance, parameter, edge.getType(), Relationship.OUTGOING);
+                RelationalWriter outgoingWriter = findIterableWriter(instance, parameter, edge.getType(), OUTGOING);
                 if (outgoingWriter != null) {
-                    entityCollector.recordTypeRelationship(edge.getStartNode(), parameter, edge.getType(), Relationship.OUTGOING);
+                    entityCollector.recordTypeRelationship(edge.getStartNode(), parameter, edge.getType(), OUTGOING);
                     relationshipsToRegister.add(new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), instance.getClass(), ClassUtils.getType(outgoingWriter.typeParameterDescriptor())));
                 }
                 RelationalWriter incomingWriter = findIterableWriter(parameter, instance, edge.getType(), Relationship.INCOMING);
@@ -436,7 +439,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
             if (!registeredEdges.contains(edge)) {
                 Object source = mappingContext.getNodeEntity(edge.getStartNode());
                 Object target = mappingContext.getNodeEntity(edge.getEndNode());
-                RelationalWriter writer = EntityAccessManager.getRelationalWriter(Neo4JOSGI.classInfo(metadata, source), edge.getType(), Relationship.OUTGOING, target);
+                RelationalWriter writer = getRelationalWriter(Neo4JOSGI.classInfo(metadata, source), edge.getType(), OUTGOING, target);
                 // ensures its tracked in the domain
                 if (writer != null) {
                     MappedRelationship mappedRelationship = new MappedRelationship(edge.getStartNode(), edge.getType(), edge.getEndNode(), edge.getId(), source.getClass(), ClassUtils.getType(writer.typeParameterDescriptor()));
@@ -497,22 +500,92 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
         logger.debug("Unable to map iterable of type: {} onto property of {}", valueType, classInfo.name());
     }
 
-    private ClassInfo getRelationshipEntity(Edge edge) {
-        for (ClassInfo classInfo : metadata.classInfoByLabelOrType(edge.getType())) {
-            if (classInfo != null) {
-                //verify the start and end node types because there might be more than one RE defined with the same type and direction but different start/end nodes
-                Object source = mappingContext.getNodeEntity(edge.getStartNode());
-                Object target = mappingContext.getNodeEntity(edge.getEndNode());
-                if (nodeTypeMatches(classInfo, source, StartNode.class.getName()) &&
-                        nodeTypeMatches(classInfo, target, EndNode.class.getName())) {
-                    return classInfo;
-                }
+	// Find the correct RE associated with the edge. The edge type may be polymorphic, so we need to do a bit of work
+	// to identify the correct RE to bind to. We must not cache the value when found, because the correct determination
+	// depends on the runtime values of the edge in the mapping context, which may vary for the same edge pattern.
+	private ClassInfo getRelationshipEntity(Edge edge) {
+
+		Object source = mappingContext.getNodeEntity(edge.getStartNode());
+		Object target = mappingContext.getNodeEntity(edge.getEndNode());
+
+        Set<ClassInfo> classInfos = metadata.classInfoByLabelOrType(edge.getType());
+
+        for (ClassInfo classInfo : classInfos) {
+
+			// both source and target must be declared as START and END nodes respectively
+			if (!nodeTypeMatches(classInfo, source, StartNode.CLASS)) {
+				continue;
+			}
+
+			if (!nodeTypeMatches(classInfo, target, EndNode.CLASS)) {
+				continue;
+			}
+
+			// if the source OR the target (or one of their superclasses) declares the relationship
+			// back to the relationshipEntityClass, we've found a match
+			Class relationshipEntityClass = classInfo.getUnderlyingClass();
+			if (declaresRelationshipTo(relationshipEntityClass, source.getClass(), edge.getType(), OUTGOING)) {
+				return classInfo;
+			}
+
+			if (declaresRelationshipTo(relationshipEntityClass, target.getClass(), edge.getType(), INCOMING)) {
+				return classInfo;
+			}
+
+        }
+        // we've made our best efforts to find the correct RE. If we've failed it means
+        // that either a matching RE doesn't exist, or its start and end nodes don't declare a reference
+        // to the RE. If we can find a single properly-formed matching RE for this edge we'll assume it is
+        // the right one, otherwise ... give up
+        if (classInfos.size() == 1) {
+            ClassInfo classInfo = classInfos.iterator().next();
+            if (nodeTypeMatches(classInfo, source, StartNode.CLASS) && nodeTypeMatches(classInfo, target, EndNode.CLASS)) {
+                return classInfo;
+            }
+        } else {
+            if (classInfos.size() == 0) {
+                // not necessarily a problem, we mey be fetching edges we don't want to hydrate
+                logger.debug("Unable to find a matching @RelationshipEntity for {}", edge.toString());
+            } else {
+                // almost definitely a user bug
+                logger.error("Found more than one matching @RelationshipEntity for {} but cannot tell which one to use", edge.toString());
             }
         }
         return null;
     }
 
-    /**
+	/**
+	 * Determines if a class hierarchy that possibly declares a given relationship declares it on a specific class.
+	 *
+	 * This method is used to resolve polymorphic relationship entity relationship types. In this case, 'to' is
+	 * a concrete subclass of a relationship entity whose relationship type is declared on a superclass. In other words,
+	 * the relationship type is polymorphic.  The class 'by' is a class that is either a start node or end node of that
+	 * polymorphic type, but which does not necessarily refer to the relationship entity subtype referenced by 'to'.
+	 *
+	 * See #298
+	 *
+	 * Logic:
+	 *
+	 * Given a class 'to', a class 'by' and a relationship 'r':
+	 *
+	 * if the class 'by' (or one of its superclasses) declares a setter or field 'x', annotated with relationship 'r':
+	 *   if the class of 'x' is the same as 'to':
+	 *   	<-- true
+	 *
+	 * Otherwise: <-- false.
+	 *
+	 * @param to the Class which the named relationship must refer to
+	 * @param by a Class the named relationship is declared by
+	 * @param relationshipName the name of the relationship
+	 * @param relationshipDirection the direction of the relationship
+	 *
+	 * @return true if 'by' declares the specified relationship on 'to', false otherwise
+	 */
+	private boolean declaresRelationshipTo(Class to, Class by, String relationshipName, String relationshipDirection) {
+        return EntityAccessManager.getRelationalWriter(Neo4JOSGI.classInfo(metadata, by.getName()), relationshipName, relationshipDirection, to) != null;
+	}
+
+	/**
      * Checks that the class of the node matches the class defined in the class info for a given annotation
      *
      * @param classInfo the ClassInfo

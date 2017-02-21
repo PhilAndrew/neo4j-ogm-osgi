@@ -24,7 +24,7 @@ import org.neo4j.ogm.session.Neo4jSession;
 /**
  * @author Luanne Misquitta
  */
-public class GraphIdDelegate implements Capability.GraphId {
+public class GraphIdDelegate {
 
 	private final Neo4jSession session;
 
@@ -32,9 +32,8 @@ public class GraphIdDelegate implements Capability.GraphId {
 		this.session = session;
 	}
 
-	@Override
 	public Long resolveGraphIdFor(Object possibleEntity) {
-		if (possibleEntity!=null) {
+		if (possibleEntity != null) {
 			ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), possibleEntity);
 			try {
 				if (classInfo != null) {
@@ -51,12 +50,10 @@ public class GraphIdDelegate implements Capability.GraphId {
 		return null;
 	}
 
-	@Override
 	public boolean detachNodeEntity(Long id) {
 		return session.context().detachNodeEntity(id);
 	}
 
-	@Override
 	public boolean detachRelationshipEntity(Long id) {
 		return session.context().detachRelationshipEntity(id);
 	}

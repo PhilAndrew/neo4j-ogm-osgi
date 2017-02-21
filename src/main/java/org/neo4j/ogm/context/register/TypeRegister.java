@@ -104,11 +104,8 @@ public class TypeRegister {
     }
 
     private Map<Object, Object> objectMap(Class<?> type) {
-        Map<Object, Object> objectMap = register.get(type);
-        if (objectMap == null) {
-            objectMap = new HashMap<>();
-            register.put(type, objectMap);
-        }
+        Map<Object, Object> objectMap = register.computeIfAbsent(type, k -> new HashMap<>());
         return objectMap;
     }
 }
+

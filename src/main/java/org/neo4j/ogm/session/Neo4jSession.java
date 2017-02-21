@@ -13,6 +13,7 @@
 
 package org.neo4j.ogm.session;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -72,6 +73,7 @@ public class Neo4jSession implements Session {
     private final GraphIdDelegate graphIdDelegate = new GraphIdDelegate(this);
 
     private Driver driver;
+    private String bookmark;
 
     private List<EventListener> registeredEventListeners = new LinkedList<>();
 
@@ -84,6 +86,11 @@ public class Neo4jSession implements Session {
         this.txManager = new DefaultTransactionManager(this, driver);
     }
 
+    public Neo4jSession(MetaData metaData, Driver driver, List<EventListener> eventListeners) {
+        this(metaData, driver);
+        registeredEventListeners.addAll(eventListeners);
+    }
+
     @Override
     public EventListener register(EventListener eventListener) {
         registeredEventListeners.add(eventListener);
@@ -93,25 +100,21 @@ public class Neo4jSession implements Session {
     @Override
     public void notifyListeners(Event event) {
         for (EventListener eventListener : registeredEventListeners) {
-            if (eventListener == null) {
-                registeredEventListeners.remove(eventListener);
-            } else {
-                switch (event.getLifeCycle()) {
-                    case PRE_SAVE:
-                        eventListener.onPreSave(event);
-                        break;
-                    case POST_SAVE:
-                        eventListener.onPostSave(event);
-                        break;
-                    case PRE_DELETE:
-                        eventListener.onPreDelete(event);
-                        break;
-                    case POST_DELETE:
-                        eventListener.onPostDelete(event);
-                        break;
-                    default:
-                        logger.warn("Event not recognised: {}", event);
-                }
+            switch (event.getLifeCycle()) {
+                case PRE_SAVE:
+                    eventListener.onPreSave(event);
+                    break;
+                case POST_SAVE:
+                    eventListener.onPostSave(event);
+                    break;
+                case PRE_DELETE:
+                    eventListener.onPreDelete(event);
+                    break;
+                case POST_DELETE:
+                    eventListener.onPostDelete(event);
+                    break;
+                default:
+                    logger.warn("Event not recognised: {}", event);
             }
         }
     }
@@ -131,7 +134,6 @@ public class Neo4jSession implements Session {
             }
         }
         return false;
-
     }
 
     /*
@@ -140,12 +142,12 @@ public class Neo4jSession implements Session {
      *----------------------------------------------------------------------------------------------------------
      */
     @Override
-    public <T, U> T load(Class<T> type, U id) {
+    public <T, ID extends Serializable> T load(Class<T> type, ID id) {
         return loadOneHandler.load(type, id);
     }
 
     @Override
-    public <T, U> T load(Class<T> type, U id, int depth) {
+    public <T, ID extends Serializable> T load(Class<T> type, ID id, int depth) {
         return loadOneHandler.load(type, id, depth);
     }
 
@@ -274,49 +276,48 @@ public class Neo4jSession implements Session {
         return loadByTypeHandler.loadAll(type, filters, sortOrder, pagination, depth);
     }
 
-
     /*
      *----------------------------------------------------------------------------------------------------------
      * loadByIdsHandler (no filters yet)
      *----------------------------------------------------------------------------------------------------------
      */
     @Override
-    public <T> Collection<T> loadAll(Class<T> type, Collection<Long> ids) {
+    public <T, ID extends Serializable> Collection<T> loadAll(Class<T> type, Collection<ID> ids) {
         return loadByIdsHandler.loadAll(type, ids);
     }
 
     @Override
-    public <T> Collection<T> loadAll(Class<T> type, Collection<Long> ids, int depth) {
+    public <T, ID extends Serializable> Collection<T> loadAll(Class<T> type, Collection<ID> ids, int depth) {
         return loadByIdsHandler.loadAll(type, ids, depth);
     }
 
     @Override
-    public <T> Collection<T> loadAll(Class<T> type, Collection<Long> ids, SortOrder sortOrder) {
+    public <T, ID extends Serializable> Collection<T> loadAll(Class<T> type, Collection<ID> ids, SortOrder sortOrder) {
         return loadByIdsHandler.loadAll(type, ids, sortOrder);
     }
 
     @Override
-    public <T> Collection<T> loadAll(Class<T> type, Collection<Long> ids, SortOrder sortOrder, int depth) {
+    public <T, ID extends Serializable> Collection<T> loadAll(Class<T> type, Collection<ID> ids, SortOrder sortOrder, int depth) {
         return loadByIdsHandler.loadAll(type, ids, sortOrder, depth);
     }
 
     @Override
-    public <T> Collection<T> loadAll(Class<T> type, Collection<Long> ids, Pagination paging) {
+    public <T, ID extends Serializable> Collection<T> loadAll(Class<T> type, Collection<ID> ids, Pagination paging) {
         return loadByIdsHandler.loadAll(type, ids, paging);
     }
 
     @Override
-    public <T> Collection<T> loadAll(Class<T> type, Collection<Long> ids, Pagination paging, int depth) {
+    public <T, ID extends Serializable> Collection<T> loadAll(Class<T> type, Collection<ID> ids, Pagination paging, int depth) {
         return loadByIdsHandler.loadAll(type, ids, paging, depth);
     }
 
     @Override
-    public <T> Collection<T> loadAll(Class<T> type, Collection<Long> ids, SortOrder sortOrder, Pagination pagination) {
+    public <T, ID extends Serializable> Collection<T> loadAll(Class<T> type, Collection<ID> ids, SortOrder sortOrder, Pagination pagination) {
         return loadByIdsHandler.loadAll(type, ids, sortOrder, pagination);
     }
 
     @Override
-    public <T> Collection<T> loadAll(Class<T> type, Collection<Long> ids, SortOrder sortOrder, Pagination pagination, int depth) {
+    public <T, ID extends Serializable> Collection<T> loadAll(Class<T> type, Collection<ID> ids, SortOrder sortOrder, Pagination pagination, int depth) {
         return loadByIdsHandler.loadAll(type, ids, sortOrder, pagination, depth);
     }
 
@@ -475,9 +476,9 @@ public class Neo4jSession implements Session {
 
     /*
      *----------------------------------------------------------------------------------------------------------
-	 * GraphIdDelegate
-	 *----------------------------------------------------------------------------------------------------------
-	*/
+     * GraphIdDelegate
+     *----------------------------------------------------------------------------------------------------------
+    */
     @Override
     public Long resolveGraphIdFor(Object possibleEntity) {
         return graphIdDelegate.resolveGraphIdFor(possibleEntity);
@@ -496,13 +497,12 @@ public class Neo4jSession implements Session {
     //
     // These helper methods for the delegates are deliberately NOT defined on the Session interface
     //
-    public QueryStatements queryStatementsFor(Class type) {
-        if (metaData.isRelationshipEntity(type.getName(), true)) {
-            return new RelationshipQueryStatements();
-        }
-        else {
+    public <T, ID extends Serializable> QueryStatements<ID> queryStatementsFor(Class<T> type) {
+        if (metaData.isRelationshipEntityNeo4J(type.getName(), true)) {
+            return new RelationshipQueryStatements<>();
+        } else {
             final FieldInfo fieldInfo = metaData.classInfoNeo4JOSGI(type.getName(), true).primaryIndexField();
-            return new NodeQueryStatements(fieldInfo != null ? fieldInfo.getName(): null);
+            return new NodeQueryStatements<>(fieldInfo != null ? fieldInfo.property() : null);
         }
     }
 
@@ -544,8 +544,8 @@ public class Neo4jSession implements Session {
     }
 
     public void resolvePropertyAnnotations(Class entityType, Iterable<Filter> filters) {
-        for(Filter filter : filters) {
-            if(filter.getOwnerEntityType() == null) {
+        for (Filter filter : filters) {
+            if (filter.getOwnerEntityType() == null) {
                 filter.setOwnerEntityType(entityType);
             }
             filter.setPropertyName(resolvePropertyName(filter.getOwnerEntityType(), filter.getPropertyName()));
@@ -557,11 +557,11 @@ public class Neo4jSession implements Session {
                 filter.setCompositeConverter(fieldInfo.getCompositeConverter());
             }
 
-            if(filter.isNested()) {
+            if (filter.isNested()) {
                 resolveRelationshipType(filter);
                 ClassInfo nestedClassInfo = metaData().classInfoMaybeWrongNeo4JOSGI(filter.getNestedPropertyType().getName(), true);
                 filter.setNestedEntityTypeLabel(entityType(nestedClassInfo.name()));
-                if(metaData().isRelationshipEntity(nestedClassInfo.name(), true)) {
+                if (metaData().isRelationshipEntityNeo4J(nestedClassInfo.name(), true)) {
                     filter.setNestedRelationshipEntity(true);
                 }
             }
@@ -589,7 +589,7 @@ public class Neo4jSession implements Session {
                 return annotation.get(Property.NAME, propertyName);
             }
         }
-        //session.metaData().classInfoNeo4JOSGI(entityType.getName()).propertyFieldByName(propertyName).property();
+        //session.metaData().classInfo(entityType.getName()).propertyFieldByName(propertyName).property();
         return propertyName;
     }
 
@@ -615,9 +615,13 @@ public class Neo4jSession implements Session {
         }
     }
 
+    @Override
+    public String getLastBookmark() {
+        return bookmark;
+    }
 
-
-
-
-
+    @Override
+    public void withBookmark(String bookmark) {
+        this.bookmark = bookmark;
+    }
 }

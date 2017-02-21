@@ -22,10 +22,8 @@ import org.neo4j.ogm.MetaData;
 import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.RelationshipEntity;
-import org.neo4j.ogm.compiler.CompileContext;
+import org.neo4j.ogm.compiler.*;
 import org.neo4j.ogm.compiler.Compiler;
-import org.neo4j.ogm.compiler.NodeBuilder;
-import org.neo4j.ogm.compiler.RelationshipBuilder;
 import org.neo4j.ogm.entity.io.EntityAccessManager;
 import org.neo4j.ogm.entity.io.FieldWriter;
 import org.neo4j.ogm.entity.io.PropertyReader;
@@ -34,7 +32,6 @@ import org.neo4j.ogm.exception.MappingException;
 import org.neo4j.ogm.metadata.AnnotationInfo;
 import org.neo4j.ogm.metadata.ClassInfo;
 import org.neo4j.ogm.metadata.FieldInfo;
-import org.neo4j.ogm.service.Components;
 import org.neo4j.ogm.utils.ClassUtils;
 import org.neo4j.ogm.utils.EntityUtils;
 import org.slf4j.Logger;
@@ -50,7 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 public class EntityGraphMapper implements EntityMapper {
 
-    private final Logger logger = LoggerFactory.getLogger(EntityGraphMapper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EntityGraphMapper.class);
 
     private final MetaData metaData;
     private final MappingContext mappingContext;
@@ -78,16 +75,16 @@ public class EntityGraphMapper implements EntityMapper {
             throw new NullPointerException("Cannot map null object");
         }
 
-        Compiler compiler = Components.compiler();
+        Compiler compiler = new MultiStatementCypherCompiler();
 
         // add all the relationships we know about. This includes the relationships that
         // won't be modified by the mapping request.
         for (MappedRelationship mappedRelationship : mappingContext.getRelationships()) {
-            logger.debug("context-init: (${})-[:{}]->(${})", mappedRelationship.getStartNodeId(), mappedRelationship.getRelationshipType(), mappedRelationship.getEndNodeId());
+            LOGGER.debug("context-init: (${})-[:{}]->(${})", mappedRelationship.getStartNodeId(), mappedRelationship.getRelationshipType(), mappedRelationship.getEndNodeId());
             compiler.context().registerRelationship(mappedRelationship);
         }
 
-        logger.debug("context initialised with {} relationships", mappingContext.getRelationships().size());
+        LOGGER.debug("context initialised with {} relationships", mappingContext.getRelationships().size());
 
         // if the object is a RelationshipEntity, persist it by persisting both the start node and the end node
         // and then ensure the relationship between the two is created or updated as necessary
@@ -150,16 +147,14 @@ public class EntityGraphMapper implements EntityMapper {
      */
     private void deleteObsoleteRelationships(Compiler compiler) {
         CompileContext context = compiler.context();
-        Iterator<MappedRelationship> mappedRelationshipIterator = mappingContext.getRelationships().iterator();
 
-        while (mappedRelationshipIterator.hasNext()) {
+        for (MappedRelationship mappedRelationship : mappingContext.getRelationships()) {
 
-            MappedRelationship mappedRelationship = mappedRelationshipIterator.next();
             // if we cannot remove this relationship from the compile context, it
             // means the user has deleted the relationship
             if (!context.removeRegisteredRelationship(mappedRelationship)) {
 
-                logger.debug("context-del: {}", mappedRelationship);
+                LOGGER.debug("context-del: {}", mappedRelationship);
 
                 // tell the compiler to prepare a statement that will delete the relationship from the graph
                 compiler.unrelate(mappedRelationship.getStartNodeId(), mappedRelationship.getRelationshipType(), mappedRelationship.getEndNodeId(), mappedRelationship.getRelationshipId());
@@ -182,13 +177,13 @@ public class EntityGraphMapper implements EntityMapper {
 
                 Object dirty = mappingContext.getNodeEntity(mappedRelationship.getEndNodeId());
                 if (dirty != null) {
-                    logger.debug("flushing end node of: (${})-[:{}]->(${})", mappedRelationship.getStartNodeId(), mappedRelationship.getRelationshipType(), mappedRelationship.getEndNodeId());
+                    LOGGER.debug("flushing end node of: (${})-[:{}]->(${})", mappedRelationship.getStartNodeId(), mappedRelationship.getRelationshipType(), mappedRelationship.getEndNodeId());
                     mappingContext.removeNodeEntity(dirty, mappedRelationship.getEndNodeId());
                 }
 
                 dirty = mappingContext.getNodeEntity(mappedRelationship.getStartNodeId());
                 if (dirty != null) {
-                    logger.debug("flushing start node of: (${})-[:{}]->(${})", mappedRelationship.getStartNodeId(), mappedRelationship.getRelationshipType(), mappedRelationship.getEndNodeId());
+                    LOGGER.debug("flushing start node of: (${})-[:{}]->(${})", mappedRelationship.getStartNodeId(), mappedRelationship.getRelationshipType(), mappedRelationship.getEndNodeId());
                     mappingContext.removeNodeEntity(dirty, mappedRelationship.getStartNodeId());
                 }
             }
@@ -212,7 +207,7 @@ public class EntityGraphMapper implements EntityMapper {
 
         Long identity = EntityUtils.identity(entity, metaData);
         if (context.visited(identity)) {
-            logger.debug("already visited: {}", entity);
+            LOGGER.debug("already visited: {}", entity);
             return context.visitedNode(identity);
         }
 
@@ -222,7 +217,7 @@ public class EntityGraphMapper implements EntityMapper {
             if (horizon != 0) {
                 mapEntityReferences(entity, nodeBuilder, horizon - 1, compiler);
             } else {
-                logger.debug("at horizon: {} ", entity);
+                LOGGER.debug("at horizon: {} ", entity);
             }
         }
         return nodeBuilder;
@@ -239,7 +234,7 @@ public class EntityGraphMapper implements EntityMapper {
     private void updateNode(Object entity, CompileContext context, NodeBuilder nodeBuilder) {
         // fire pre-save event here
         if (mappingContext.isDirty(entity)) {
-            logger.debug("{} has changed", entity);
+            LOGGER.debug("{} has changed", entity);
             context.register(entity);
             ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, entity);
             Collection<PropertyReader> propertyReaders = EntityAccessManager.getPropertyReaders(classInfo);
@@ -252,12 +247,12 @@ public class EntityGraphMapper implements EntityMapper {
             }
         } else {
             context.deregister(nodeBuilder);
-            logger.debug("{}, has not changed", entity);
+            LOGGER.debug("{}, has not changed", entity);
         }
 
 //        if (mappingContext.isDirty(entity)) {
 //            context.register(entity);
-//            nodeBuilder.add(entity, metaData.classInfoNeo4JOSGI(entity));
+//            nodeBuilder.add(entity, metaData.classInfo(entity));
 //        } else {
 //            context.deregister(nodeBuilder);
 //        }
@@ -284,7 +279,7 @@ public class EntityGraphMapper implements EntityMapper {
         Collection<String> labels = EntityUtils.labels(entity, metaData);
 
         NodeBuilder nodeBuilder;
-        final String primaryIndex = classInfo.primaryIndexField() != null ? classInfo.primaryIndexField().getName() : null;
+        final String primaryIndex = classInfo.primaryIndexField() != null ? classInfo.primaryIndexField().property() : null;
         if (id == null) {
             Long entityIdRef = EntityUtils.identity(entity, metaData);
             nodeBuilder = compiler.newNode(entityIdRef).addLabels(labels).setPrimaryIndex(primaryIndex);
@@ -296,7 +291,7 @@ public class EntityGraphMapper implements EntityMapper {
         }
         Long identity = EntityUtils.identity(entity, metaData);
         context.visit(identity, nodeBuilder);
-        logger.debug("visiting: {}", entity);
+        LOGGER.debug("visiting: {}", entity);
         return nodeBuilder;
     }
 
@@ -323,7 +318,7 @@ public class EntityGraphMapper implements EntityMapper {
      */
     private void mapEntityReferences(final Object entity, NodeBuilder nodeBuilder, int horizon, Compiler compiler) {
 
-        logger.debug("mapping references declared by: {} ", entity);
+        LOGGER.debug("mapping references declared by: {} ", entity);
 
         ClassInfo srcInfo = Neo4JOSGI.classInfo(metaData, entity);
 
@@ -342,7 +337,7 @@ public class EntityGraphMapper implements EntityMapper {
             if (srcIdentity != null) {
                 boolean cleared = clearContextRelationships(context, srcIdentity, endNodeType, directedRelationship);
                 if (!cleared) {
-                    logger.debug("this relationship is already being managed: {}-{}-{}-()", entity, relationshipType, relationshipDirection);
+                    LOGGER.debug("this relationship is already being managed: {}-{}-{}-()", entity, relationshipType, relationshipDirection);
                     continue;
                 }
             }
@@ -365,7 +360,7 @@ public class EntityGraphMapper implements EntityMapper {
                     }
                 }
 
-                logger.debug("mapping reference type: {}", relationshipType);
+                LOGGER.debug("mapping reference type: {}", relationshipType);
 
                 RelationshipNodes relNodes = new RelationshipNodes(entity, relatedObject, startNodeType, endNodeType);
                 relNodes.sourceId = srcIdentity;
@@ -404,16 +399,16 @@ public class EntityGraphMapper implements EntityMapper {
      */
     private boolean clearContextRelationships(CompileContext context, Long identity, Class endNodeType, DirectedRelationship directedRelationship) {
         if (directedRelationship.direction().equals(Relationship.INCOMING)) {
-            logger.debug("context-del: ({})<-[:{}]-()", identity, directedRelationship.type());
-            return context.deregisterIncomingRelationships(identity, directedRelationship.type(), endNodeType, metaData.isRelationshipEntity(endNodeType.getName()));
+            LOGGER.debug("context-del: ({})<-[:{}]-()", identity, directedRelationship.type());
+            return context.deregisterIncomingRelationships(identity, directedRelationship.type(), endNodeType, metaData.isRelationshipEntityNeo4J(endNodeType.getName(), true));
         } else if (directedRelationship.direction().equals(Relationship.OUTGOING)) {
-            logger.debug("context-del: ({})-[:{}]->()", identity, directedRelationship.type());
+            LOGGER.debug("context-del: ({})-[:{}]->()", identity, directedRelationship.type());
             return context.deregisterOutgoingRelationships(identity, directedRelationship.type(), endNodeType);
         } else {
             //An undirected relationship, clear both directions
-            logger.debug("context-del: ({})<-[:{}]-()", identity, directedRelationship.type());
-            logger.debug("context-del: ({})-[:{}]->()", identity, directedRelationship.type());
-            boolean clearedIncoming = context.deregisterIncomingRelationships(identity, directedRelationship.type(), endNodeType, metaData.isRelationshipEntity(endNodeType.getName()));
+            LOGGER.debug("context-del: ({})<-[:{}]-()", identity, directedRelationship.type());
+            LOGGER.debug("context-del: ({})-[:{}]->()", identity, directedRelationship.type());
+            boolean clearedIncoming = context.deregisterIncomingRelationships(identity, directedRelationship.type(), endNodeType, metaData.isRelationshipEntityNeo4J(endNodeType.getName(), true));
             boolean clearedOutgoing = context.deregisterOutgoingRelationships(identity, directedRelationship.type(), endNodeType);
             return clearedIncoming || clearedOutgoing;
         }
@@ -440,7 +435,7 @@ public class EntityGraphMapper implements EntityMapper {
      */
     private void link(Compiler cypherCompiler, DirectedRelationship directedRelationship, NodeBuilder nodeBuilder, int horizon, boolean mapBothDirections, RelationshipNodes relNodes) {
 
-        logger.debug("linking to entity {} in {} direction", relNodes.target, mapBothDirections ? "both" : "one");
+        LOGGER.debug("linking to entity {} in {} direction", relNodes.target, mapBothDirections ? "both" : "one");
 
         if (relNodes.target != null) {
             CompileContext context = cypherCompiler.context();
@@ -452,13 +447,13 @@ public class EntityGraphMapper implements EntityMapper {
                 if (!context.visitedRelationshipEntity(reIdentity)) {
                     mapRelationshipEntity(relNodes.target, relNodes.source, relationshipBuilder, context, nodeBuilder, cypherCompiler, horizon, relNodes.sourceType, relNodes.targetType);
                 } else {
-                    logger.debug("RE already visited {}: ", relNodes.target);
+                    LOGGER.debug("RE already visited {}: ", relNodes.target);
                 }
             } else {
                 mapRelatedEntity(cypherCompiler, nodeBuilder, relationshipBuilder, horizon, relNodes);
             }
         } else {
-            logger.debug("cannot create relationship: ({})-[:{}]->(null)", relNodes.sourceId, directedRelationship.type());
+            LOGGER.debug("cannot create relationship: ({})-[:{}]->(null)", relNodes.sourceId, directedRelationship.type());
         }
     }
 
@@ -549,7 +544,7 @@ public class EntityGraphMapper implements EntityMapper {
      */
     private void mapRelationshipEntity(Object relationshipEntity, Object parent, RelationshipBuilder relationshipBuilder, CompileContext context, NodeBuilder nodeBuilder, Compiler cypherCompiler, int horizon, Class startNodeType, Class endNodeType) {
 
-        logger.debug("mapping relationshipEntity {}", relationshipEntity);
+        LOGGER.debug("mapping relationshipEntity {}", relationshipEntity);
 
         ClassInfo relEntityClassInfo = Neo4JOSGI.classInfo(metaData, relationshipEntity);
 
@@ -582,13 +577,13 @@ public class EntityGraphMapper implements EntityMapper {
             if (tgtIdentity != null && srcIdentity != null) {
                 MappedRelationship mappedRelationship = createMappedRelationship(relationshipBuilder, relNodes);
                 if (context.removeRegisteredRelationship(mappedRelationship)) {
-                    logger.debug("RE successfully marked for re-writing");
+                    LOGGER.debug("RE successfully marked for re-writing");
                 } else {
-                    logger.debug("RE is new");
+                    LOGGER.debug("RE is new");
                 }
             }
         } else {
-            logger.debug("RE is new or has not changed");
+            LOGGER.debug("RE is new or has not changed");
         }
 
 
@@ -719,7 +714,7 @@ public class EntityGraphMapper implements EntityMapper {
 
         // tgtNodeBuilder will be null if tgtObject is a transient class, or a subclass of a transient class
         if (tgtNodeBuilder != null) {
-            logger.debug("trying to map relationship between {} and {}", relNodes.source, relNodes.target);
+            LOGGER.debug("trying to map relationship between {} and {}", relNodes.source, relNodes.target);
             Long tgtIdentity = (Long) EntityAccessManager.getIdentityPropertyReader(Neo4JOSGI.classInfo(metaData, relNodes.target)).readProperty(relNodes.target);
             CompileContext context = compiler.context();
             relNodes.targetId = tgtIdentity;
@@ -760,7 +755,7 @@ public class EntityGraphMapper implements EntityMapper {
             if (!mappingContext.containsRelationship(mappedRelationship)) {
                 maybeCreateRelationship(context, srcNodeBuilder.reference(), relationshipBuilder, tgtNodeBuilder.reference(), relNodes.sourceType, relNodes.targetType);
             } else {
-                logger.debug("context-add: ({})-[{}:{}]->({})", mappedRelationship.getStartNodeId(), relationshipBuilder.reference(), mappedRelationship.getRelationshipType(), mappedRelationship.getEndNodeId());
+                LOGGER.debug("context-add: ({})-[{}:{}]->({})", mappedRelationship.getStartNodeId(), relationshipBuilder.reference(), mappedRelationship.getRelationshipType(), mappedRelationship.getEndNodeId());
                 mappedRelationship.activate();
                 context.registerRelationship(mappedRelationship);
             }
@@ -791,7 +786,7 @@ public class EntityGraphMapper implements EntityMapper {
 
         //if (hasTransientRelationship(context, src, relationshipBuilder.type(), tgt)) {
         if (hasTransientRelationship(context, src, relationshipBuilder, tgt)) {
-            logger.debug("new relationship is already registered");
+            LOGGER.debug("new relationship is already registered");
             if (relationshipBuilder.isBidirectional()) {
                 relationshipBuilder.relate(src, tgt);
                 context.register(new TransientRelationship(src, relationshipBuilder.reference(), relationshipBuilder.type(), tgt, tgtClass, srcClass)); // we log the new relationship in the opposite direction as part of the transaction context.
@@ -802,7 +797,7 @@ public class EntityGraphMapper implements EntityMapper {
         if (relationshipBuilder.hasDirection(Relationship.INCOMING)) {
             //Still create a mapped relationship from src->tgt but we need to reconcile the types too
             //If its a rel entity then we want to rebase the startClass to the @StartNode of the rel entity and the endClass to the rel entity
-            if (metaData.isRelationshipEntity(tgtClass.getName())) {
+            if (metaData.isRelationshipEntityNeo4J(tgtClass.getName(), true)) {
                 srcClass = tgtClass;
                 String start = EntityAccessManager.getStartNodeReader(Neo4JOSGI.classInfo(metaData, tgtClass.getName())).typeDescriptor();
                 tgtClass = ClassUtils.getType(start);
@@ -848,7 +843,7 @@ public class EntityGraphMapper implements EntityMapper {
     private void reallyCreateRelationship(CompileContext ctx, Long src, RelationshipBuilder relBuilder, Long tgt, Class srcClass, Class tgtClass) {
 
         relBuilder.relate(src, tgt);
-        logger.debug("context-new: ({})-[{}:{}]->({})", src, relBuilder.reference(), relBuilder.type(), tgt);
+        LOGGER.debug("context-new: ({})-[{}:{}]->({})", src, relBuilder.reference(), relBuilder.type(), tgt);
 
         if (relBuilder.isNew()) {  //We only want to create or log new relationships
             ctx.register(new TransientRelationship(src, relBuilder.reference(), relBuilder.type(), tgt, srcClass, tgtClass)); // we log the new relationship as part of the transaction context.

@@ -152,13 +152,12 @@ public class FieldInfo {
     }
 
     public boolean persistableAsProperty() {
-        boolean simple = primitives.contains(descriptor)
+
+        return primitives.contains(descriptor)
                 || (autoboxers.contains(descriptor) && typeParameterDescriptor == null)
                 || (typeParameterDescriptor != null && autoboxers.contains(typeParameterDescriptor))
                 || propertyConverter != null
                 || compositeConverter != null;
-
-        return simple;
     }
 
     public AttributeConverter getPropertyConverter() {
@@ -286,8 +285,7 @@ public class FieldInfo {
     }
 
     public boolean isLabelField() {
-        return this.getAnnotations().get(Labels.CLASS) != null ||
-                this.getAnnotations().get(org.neo4j.ogm.annotations.Labels.CLASS) != null;
+        return this.getAnnotations().get(Labels.CLASS) != null;
     }
 
     public boolean isArray() {

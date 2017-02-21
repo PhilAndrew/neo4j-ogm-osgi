@@ -11,19 +11,10 @@
  *  conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package org.neo4j.ogm.exception;
+package org.neo4j.ogm.config;
 
-/**
- * @author Vice Bickers
- * @author Mark Angrish
- */
-public class ServiceNotFoundException extends RuntimeException {
+public interface Credentials<T> {
 
-    public ServiceNotFoundException(String message) {
-        super(message);
-    }
+    T credentials();
 
-    public ServiceNotFoundException(String message, Throwable cause) {
-        super(message, cause);
-    }
 }
