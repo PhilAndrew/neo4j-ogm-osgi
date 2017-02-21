@@ -3,6 +3,8 @@
 
 This is Neo4J OGM Object to Graph Mapper working in OSGi as a library. It is not tested, but it happens to work, good luck if it works for you.
 
+Why is this one a good idea? This one uses Java reflection to inspect your model classes to find out how to map them to the graph. The other official Neo4J OGM reads class files to find out the mapping. In an OSGi environment, accessing class files on disk is not an attractive option, its better to use Java reflection. 
+
 ### How to use in SBT
 
 Add bintray resolver in build.sbt
