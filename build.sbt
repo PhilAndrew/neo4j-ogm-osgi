@@ -63,7 +63,7 @@ bintrayOrganization := Some("philandrew") // The organization is not the same as
 
 //publishMavenStyle := true // true or false, it still published
 
-publishMavenStyle := false
+publishMavenStyle := true
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
