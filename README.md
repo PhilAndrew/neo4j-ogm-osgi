@@ -7,16 +7,13 @@ Why is this one a good idea? This one uses Java reflection to inspect your model
 
 ### How to use in SBT
 
-Add bintray resolver in build.sbt
+You will need to do the following to publish to your local repository, sorry!
 
-    resolvers ++= Seq(
-      Resolver.bintrayIvyRepo(owner = "philandrew", repo = "org.philandrew"))
-
-
-In the program which uses this, you can specify in build.sbt dependencies.
+    sbt publishLocal
+    
+Then the sbt dependency is
 
     "universe" % "neo4j-ogm-osgi_2.11" % "1.4.39"
-
 
 ### Copyright
 
