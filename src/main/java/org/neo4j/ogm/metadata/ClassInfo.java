@@ -18,9 +18,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
@@ -86,7 +84,43 @@ public class ClassInfo {
                     isGraphId = true;
                 }
             }
-            FieldInfo fieldInfo = new FieldInfo(field.getName(), Neo4JOSGI.getDescriptorForClass(field.getType()), null, annotations, "FROM ClassInfo");
+
+            //if (field.getAnnotatedType()!=null)
+//                LOGGER.info("field.getAnnotatedType(): " + field.getAnnotatedType().toString());
+            Type typeArg = null;
+            if (Neo4JOSGI.getDescriptorForClass(field.getType()).equalsIgnoreCase("Ljava/util/List;")) {
+
+                LOGGER.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!||");
+                if (field.getAnnotations() != null) {
+                    LOGGER.info("field.getAnnotations(): " + field.getAnnotations());
+                }
+                if (field.getDeclaredAnnotations() != null) {
+                    LOGGER.info("field.getDeclaredAnnotations(): " + field.getDeclaredAnnotations());
+                }
+                if (field.getType() != null) {
+
+
+                    Type type = field.getGenericType();
+                    LOGGER.info("type: " + type);
+                    if (type instanceof ParameterizedType) {
+                        ParameterizedType pt = (ParameterizedType) type;
+                        LOGGER.info("raw type: " + pt.getRawType());
+                        LOGGER.info("owner type: " + pt.getOwnerType());
+                        LOGGER.info("actual type args:");
+                        for (Type t : pt.getActualTypeArguments()) {
+                            LOGGER.info("    " + t);
+                            typeArg = t;
+                    }
+
+                    }
+                }
+            }
+
+            String typeArgName = null;
+            if (typeArg!=null) {
+                typeArgName = "L" + typeArg.getTypeName().replace(".", "/") + ";";
+            }
+            FieldInfo fieldInfo = new FieldInfo(field.getName(), Neo4JOSGI.getDescriptorForClass(field.getType()), typeArgName, annotations, "FROM ClassInfo");
             if (isGraphId) identityField = fieldInfo;
 
             fieldsInfo.set(fieldInfo.getName(), fieldInfo);
