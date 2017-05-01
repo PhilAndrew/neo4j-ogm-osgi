@@ -327,6 +327,9 @@ public class EntityGraphMapper implements EntityMapper {
             String relationshipType = reader.relationshipType();
             String relationshipDirection = reader.relationshipDirection();
             Class startNodeType = srcInfo.getUnderlyingClass();
+            // @todo Neo4JOSGI.getDescriptorForClass(field.getType())
+            LOGGER.debug(reader.getClass().getName());
+            LOGGER.debug("Type desc!!!: " + reader.typeDescriptor());
             Class endNodeType = ClassUtils.getType(reader.typeDescriptor());
 
             DirectedRelationship directedRelationship = new DirectedRelationship(relationshipType, relationshipDirection);
@@ -408,6 +411,12 @@ public class EntityGraphMapper implements EntityMapper {
             //An undirected relationship, clear both directions
             LOGGER.debug("context-del: ({})<-[:{}]-()", identity, directedRelationship.type());
             LOGGER.debug("context-del: ({})-[:{}]->()", identity, directedRelationship.type());
+            LOGGER.debug("Context: " + context);
+            LOGGER.debug("identity: " + identity);
+            LOGGER.debug("directedRelationship: " + directedRelationship);
+            LOGGER.debug("endNodeType: " + endNodeType);
+            LOGGER.debug("metaData: " + metaData);
+
             boolean clearedIncoming = context.deregisterIncomingRelationships(identity, directedRelationship.type(), endNodeType, metaData.isRelationshipEntityNeo4J(endNodeType.getName(), true));
             boolean clearedOutgoing = context.deregisterOutgoingRelationships(identity, directedRelationship.type(), endNodeType);
             return clearedIncoming || clearedOutgoing;

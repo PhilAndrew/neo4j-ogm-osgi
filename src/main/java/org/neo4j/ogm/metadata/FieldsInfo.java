@@ -73,7 +73,7 @@ public class FieldsInfo {
                 }
             }
             if ((accessFlags & (STATIC_FIELD | FINAL_FIELD | TRANSIENT_FIELD)) == 0 && objectAnnotations.get(Transient.CLASS) == null) {
-                fields.put(fieldName, new FieldInfo(fieldName, descriptor, typeParameterDescriptor, objectAnnotations));
+                fields.put(fieldName, new FieldInfo(fieldName, descriptor, typeParameterDescriptor, objectAnnotations, "FROM FieldsInfo"));
             }
         }
     }

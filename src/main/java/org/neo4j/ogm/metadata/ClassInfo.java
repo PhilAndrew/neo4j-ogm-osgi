@@ -86,7 +86,7 @@ public class ClassInfo {
                     isGraphId = true;
                 }
             }
-            FieldInfo fieldInfo = new FieldInfo(field.getName(), Neo4JOSGI.getDescriptorForClass(field.getType()), null, annotations);
+            FieldInfo fieldInfo = new FieldInfo(field.getName(), Neo4JOSGI.getDescriptorForClass(field.getType()), null, annotations, "FROM ClassInfo");
             if (isGraphId) identityField = fieldInfo;
 
             fieldsInfo.set(fieldInfo.getName(), fieldInfo);

@@ -21,9 +21,12 @@ import org.neo4j.ogm.annotation.Labels;
 import org.neo4j.ogm.annotation.Property;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.classloader.MetaDataClassLoader;
+import org.neo4j.ogm.context.EntityGraphMapper;
 import org.neo4j.ogm.typeconversion.AttributeConverter;
 import org.neo4j.ogm.typeconversion.CompositeAttributeConverter;
 import org.neo4j.ogm.utils.RelationshipUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Vince Bickers
@@ -82,7 +85,14 @@ public class FieldInfo {
      *                                if that's not appropriate
      * @param annotations             The {@link ObjectAnnotations} applied to the field
      */
-    public FieldInfo(String name, String descriptor, String typeParameterDescriptor, ObjectAnnotations annotations) {
+    public FieldInfo(String name, String descriptor, String typeParameterDescriptor, ObjectAnnotations annotations, String fromWhere) {
+
+        LOGGER.info("creating FieldInfo with");
+        LOGGER.info("name: " + name);
+        LOGGER.info("descriptor: " + descriptor);
+        LOGGER.info("typeParameterDescriptor: " + typeParameterDescriptor);
+        LOGGER.info("fromWhere: " + fromWhere);
+
         this.name = name;
 
         this.descriptor = descriptor;
@@ -301,7 +311,13 @@ public class FieldInfo {
      *
      * @return the descriptor if the field is scalar or an array, otherwise the type parameter descriptor.
      */
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FieldInfo.class);
+
     public String getTypeDescriptor() {
+
+        LOGGER.debug("descriptor: " + descriptor);
+        LOGGER.debug("typeParameterDescriptor: " + typeParameterDescriptor);
 
         if (!isIterable() || isArray()) {
             return descriptor;
