@@ -3,12 +3,16 @@ package org.neo4j.ogm;
 import org.neo4j.ogm.metadata.*;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class Neo4JOSGI {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Neo4JOSGI.class);
 
     public static String modelPackagePath = null;
 
@@ -21,6 +25,25 @@ public class Neo4JOSGI {
     }
 
     public static ClassInfo getClassInfo(String fullOrPartialClassName, Boolean queryForARealClass, Map<String, ClassInfo> infos) {
+
+        if (fullOrPartialClassName.equalsIgnoreCase("PERSON_IN_CHARGE"))
+            fullOrPartialClassName = "jumpmicro.shared.model.MMLPerson";
+        if (fullOrPartialClassName.equalsIgnoreCase("REGISTERED_COUNTRY"))
+            fullOrPartialClassName = "jumpmicro.shared.model.MMLCountry";
+        if (fullOrPartialClassName.equalsIgnoreCase("OPERATING_COUNTRY"))
+            fullOrPartialClassName = "jumpmicro.shared.model.MMLCountry";
+
+        if (fullOrPartialClassName.equalsIgnoreCase("BRANDS")) {
+            Iterator<String> keySet = infos.keySet().iterator();
+            while (keySet.hasNext()) {
+                String key = keySet.next();
+                LOGGER.info("@@@@@@@@@@@@@@@@@@@@@@#$#$#$");
+                LOGGER.info("key is: " + key);
+                LOGGER.info("vlaue is: " + infos.get(key));
+            }
+            fullOrPartialClassName = "jumpmicro.shared.model.MMLBrand";
+        }
+
         if ((modelPackagePath!=null) && (!queryForARealClass))
             fullOrPartialClassName = modelPackagePath + "." + fullOrPartialClassName;
 
@@ -84,7 +107,7 @@ public class Neo4JOSGI {
                     e.printStackTrace();
                 }
             }
-            //System.out.println("Class found for :" + fullOrPartialClassName + " as " + classFound);
+            System.out.println("Class found for :" + fullOrPartialClassName + " as " + classFound);
             info = new ClassInfo(classFound);
 
             return info;

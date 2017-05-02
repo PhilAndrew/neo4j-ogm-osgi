@@ -22,9 +22,9 @@ object Neo4JSessionFactory {
 
     Neo4JOSGI.modelPackagePath = "what.microservice.userinterface.model"
 
-    val neo4Jip = "192.168.9.131"
+    val neo4Jip = "localhost"
     val neo4Juser = "neo4j"
-    val neo4Jpassword = "password"
+    val neo4Jpassword = "sybaris"
 
     val configuration = new Configuration()
     configuration.set("username", neo4Juser)

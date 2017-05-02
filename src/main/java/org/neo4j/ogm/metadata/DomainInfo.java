@@ -346,6 +346,7 @@ public class DomainInfo implements ClassFileProcessor {
 
     // all classes, including interfaces will be registered in classNameToClassInfo map
     public ClassInfo getClassSimpleName(String fullOrPartialClassName, Boolean queryForARealClass) {
+        LOGGER.info("getClassSimpleName !!@!@");
         return getClassInfo(fullOrPartialClassName, queryForARealClass, classNameToClassInfo);
     }
 
