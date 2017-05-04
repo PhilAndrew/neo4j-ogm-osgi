@@ -36,6 +36,8 @@ public class Neo4JOSGI {
             fullOrPartialClassName = "jumpmicro.shared.model.MMLAddress";
         if (fullOrPartialClassName.equalsIgnoreCase("ADDRESS_COUNTRY"))
             fullOrPartialClassName = "jumpmicro.shared.model.MMLCountry";
+        if (fullOrPartialClassName.equalsIgnoreCase("BUSINESS_BANKS"))
+            fullOrPartialClassName = "jumpmicro.shared.model.MMLBank";
 
         if (fullOrPartialClassName.equalsIgnoreCase("BRANDS")) {
             Iterator<String> keySet = infos.keySet().iterator();
