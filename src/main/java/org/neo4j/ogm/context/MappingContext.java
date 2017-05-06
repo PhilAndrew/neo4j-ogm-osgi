@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -15,17 +15,10 @@ package org.neo4j.ogm.context;
 
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
 
-import org.neo4j.ogm.MetaData;
-import org.neo4j.ogm.Neo4JOSGI;
-import org.neo4j.ogm.classloader.MetaDataClassLoader;
-import org.neo4j.ogm.context.register.EntityRegister;
-import org.neo4j.ogm.context.register.LabelHistoryRegister;
-import org.neo4j.ogm.context.register.TypeRegister;
-import org.neo4j.ogm.entity.io.*;
 import org.neo4j.ogm.metadata.ClassInfo;
 import org.neo4j.ogm.metadata.FieldInfo;
+import org.neo4j.ogm.metadata.MetaData;
 
 /**
  * The MappingContext maintains a map of all the objects created during the hydration
@@ -43,32 +36,30 @@ public class MappingContext {
      */
     private final TypeRegister typeRegister;
 
-    private final EntityRegister<Long> nodeEntityRegister;
+    private final Map<Long, Object> nodeEntityRegister;
 
-    private final EntityRegister<Object> primaryIndexNodeRegister;
+    private final Map<Object, Object> primaryIndexNodeRegister;
 
-    private final EntityRegister<Long> relationshipEntityRegister;
+    private final Map<Long, Object> relationshipEntityRegister;
 
     private final Set<MappedRelationship> relationshipRegister;
 
-    private final LabelHistoryRegister labelHistoryRegister;
+    private final Map<Long, LabelHistory> labelHistoryRegister;
 
-    private final EntityMemo objectMemo;
+    private final IdentityMap identityMap;
 
     private final MetaData metaData;
 
 
     public MappingContext(MetaData metaData) {
         this.metaData = metaData;
-        this.objectMemo = new EntityMemo(metaData);
+        this.identityMap = new IdentityMap(metaData);
         this.typeRegister = new TypeRegister();
-        this.nodeEntityRegister = new EntityRegister<>();
-        this.primaryIndexNodeRegister = new EntityRegister<>();
-        this.relationshipEntityRegister = new EntityRegister<>();
-        // NOTE: The use of CopyOnWriteArraySet here is to prevent ConcurrentModificationException from occurring when
-        // the purge() method is called.
-        this.relationshipRegister = new CopyOnWriteArraySet<>();
-        this.labelHistoryRegister = new LabelHistoryRegister();
+        this.nodeEntityRegister = new HashMap<>();
+        this.primaryIndexNodeRegister = new HashMap<>();
+        this.relationshipEntityRegister = new HashMap<>();
+        this.relationshipRegister = new HashSet<>();
+        this.labelHistoryRegister = new HashMap<>();
     }
 
     public Object getNodeEntity(Object id) {
@@ -76,7 +67,7 @@ public class MappingContext {
         Object result = null;
 
         if (id instanceof Long) {
-            result =  nodeEntityRegister.get((Long)id);
+            result = nodeEntityRegister.get(id);
         }
 
         if (result == null) {
@@ -88,24 +79,27 @@ public class MappingContext {
 
     public Object addNodeEntity(Object entity, Long id) {
 
-        if (nodeEntityRegister.add(id, entity)) {
+
+        System.out.println("Add node entity " + id);
+        System.out.println("Add node entity " + id);
+
+        if (nodeEntityRegister.putIfAbsent(id, entity) == null) {
             entity = nodeEntityRegister.get(id);
             addType(entity.getClass(), entity, id);
             remember(entity);
             collectLabelHistory(entity);
-            final ClassInfo primaryIndexClassInfo = metaData.classInfoNeo4JOSGI(entity, true);
+            final ClassInfo primaryIndexClassInfo = metaData.classInfo(entity);
             final FieldInfo primaryIndexField = primaryIndexClassInfo.primaryIndexField(); // also need to add the class to key to prevent collisions.
             if (primaryIndexField != null) {
-                final Object primaryIndexValue = new FieldReader(primaryIndexClassInfo, primaryIndexField).read(entity);
-                primaryIndexNodeRegister.add(primaryIndexValue, entity);
+                final Object primaryIndexValue = primaryIndexField.read(entity);
+                primaryIndexNodeRegister.putIfAbsent(primaryIndexValue, entity);
             }
         }
-
 
         return entity;
     }
 
-    public boolean removeRelationship(MappedRelationship mappedRelationship) {
+    boolean removeRelationship(MappedRelationship mappedRelationship) {
         return relationshipRegister.remove(mappedRelationship);
     }
 
@@ -118,13 +112,13 @@ public class MappingContext {
      * @param entity the object to deregister
      * @param id the id of the object in Neo4j
      */
-    public void removeNodeEntity(Object entity, Long id) {
+    void removeNodeEntity(Object entity, Long id) {
         removeType(entity.getClass(), id);
         nodeEntityRegister.remove(id);
-        final ClassInfo primaryIndexClassInfo = metaData.classInfoNeo4JOSGI(entity, true);
+        final ClassInfo primaryIndexClassInfo = metaData.classInfo(entity);
         final FieldInfo primaryIndexField = primaryIndexClassInfo.primaryIndexField(); // also need to add the class to key to prevent collisions.
         if (primaryIndexField != null) {
-            final Object primaryIndexValue = new FieldReader(primaryIndexClassInfo, primaryIndexField).read(entity);
+            final Object primaryIndexValue = primaryIndexField.read(entity);
             primaryIndexNodeRegister.remove(primaryIndexValue);
         }
 
@@ -133,10 +127,10 @@ public class MappingContext {
 
     public void replaceNodeEntity(Object entity, Long id) {
         nodeEntityRegister.remove(id);
-        final ClassInfo primaryIndexClassInfo = metaData.classInfoNeo4JOSGI(entity, true);
+        final ClassInfo primaryIndexClassInfo = metaData.classInfo(entity);
         final FieldInfo primaryIndexField = primaryIndexClassInfo.primaryIndexField(); // also need to add the class to key to prevent collisions.
         if (primaryIndexField != null) {
-            final Object primaryIndexValue = new FieldReader(primaryIndexClassInfo, primaryIndexField).read(entity);
+            final Object primaryIndexValue = primaryIndexField.read(entity);
             primaryIndexNodeRegister.remove(primaryIndexValue);
         }
         addNodeEntity(entity, id);
@@ -147,18 +141,18 @@ public class MappingContext {
         addRelationshipEntity(entity, id);
     }
 
-    public Collection<Object> getEntities(Class<?> type) {
+    Collection<Object> getEntities(Class<?> type) {
         return typeRegister.get(type).values();
     }
 
-    public LabelHistory labelHistory(Long identity) {
-        return labelHistoryRegister.get(identity);
+    LabelHistory labelHistory(Long identity) {
+        return labelHistoryRegister.computeIfAbsent(identity, k -> new LabelHistory());
     }
 
     public boolean isDirty(Object entity) {
-        ClassInfo classInfo = metaData.classInfoNeo4JOSGI(entity, true);
-        Object id = EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(entity);
-        return !objectMemo.remembered((Long) id, entity, classInfo);
+        ClassInfo classInfo = metaData.classInfo(entity);
+        Object id = classInfo.identityField().readProperty(entity);
+        return !identityMap.remembered((Long) id, entity, classInfo);
     }
 
     public boolean containsRelationship(MappedRelationship relationship) {
@@ -177,7 +171,7 @@ public class MappingContext {
     }
 
     public void clear() {
-        objectMemo.clear();
+        identityMap.clear();
         relationshipRegister.clear();
         nodeEntityRegister.clear();
         primaryIndexNodeRegister.clear();
@@ -191,7 +185,7 @@ public class MappingContext {
     }
 
     public Object addRelationshipEntity(Object relationshipEntity, Long id) {
-        if (relationshipEntityRegister.add(id, relationshipEntity)) {
+        if (relationshipEntityRegister.putIfAbsent(id, relationshipEntity) == null) {
             relationshipEntity = relationshipEntityRegister.get(id);
             addType(relationshipEntity.getClass(), relationshipEntity, id);
             remember(relationshipEntity);
@@ -208,20 +202,19 @@ public class MappingContext {
      */
     public void removeType(Class<?> type) {
 
-        ClassInfo classInfo = metaData.classInfoNeo4JOSGI(type.getName(), true);
+        ClassInfo classInfo = metaData.classInfo(type.getName());
 
         if (classInfo.isInterface()) {
             List<ClassInfo> implementingClasses = metaData.getImplementingClassInfos(classInfo.name());
             for (ClassInfo implementingClass : implementingClasses) {
                 try {
-                    String implementingClassName = implementingClass.name();
-                    removeType(MetaDataClassLoader.loadClass(implementingClassName));
+                    removeType(classInfo.getUnderlyingClass());
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
         } else {
-            PropertyReader identityReader = EntityAccessManager.getIdentityPropertyReader(classInfo);
+            FieldInfo identityReader = classInfo.identityField();
             removeType(type, identityReader);
         }
     }
@@ -256,10 +249,10 @@ public class MappingContext {
      *
      * @param entity the instance whose references and relationship mappings we want to purge
      */
-    public void removeEntity(Object entity) {
+    void removeEntity(Object entity) {
         Class<?> type = entity.getClass();
-        ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, type.getName());
-        PropertyReader identityReader = EntityAccessManager.getIdentityPropertyReader(classInfo);
+        ClassInfo classInfo = metaData.classInfo(type.getName());
+        FieldInfo identityReader = classInfo.identityField();
         Long id = (Long) identityReader.readProperty(entity);
 
         purge(entity, identityReader, type);
@@ -280,9 +273,9 @@ public class MappingContext {
     public void reset(Object entity) {
         removeEntity(entity);
         Class<?> type = entity.getClass();
-        ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, type.getName());
+        ClassInfo classInfo = metaData.classInfo(type.getName());
         Field identityField = classInfo.getField(classInfo.identityField());
-        FieldWriter.write(identityField, entity, null);
+        FieldInfo.write(identityField, entity, null);
     }
 
 
@@ -291,14 +284,14 @@ public class MappingContext {
         Set<Object> neighbours = new HashSet<>();
 
         Class<?> type = entity.getClass();
-        ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, type.getName());
-        PropertyReader identityReader = EntityAccessManager.getIdentityPropertyReader(classInfo);
+        ClassInfo classInfo = metaData.classInfo(type.getName());
+        FieldInfo identityReader = classInfo.identityField();
 
         Long id = (Long) identityReader.readProperty(entity);
 
         if (id != null) {
-            if (!metaData.isRelationshipEntityNeo4J(type.getName(), true)) {
-                if (nodeEntityRegister.contains(id)) {
+            if (!metaData.isRelationshipEntity(type.getName())) {
+                if (nodeEntityRegister.containsKey(id)) {
                     // todo: this will be very slow for many objects
                     // todo: refactor to create a list of mappedRelationships from a nodeEntity id.
                     for (MappedRelationship mappedRelationship : relationshipRegister) {
@@ -310,9 +303,9 @@ public class MappingContext {
                         }
                     }
                 }
-            } else if (relationshipEntityRegister.contains(id)) {
-                RelationalReader startNodeReader = EntityAccessManager.getStartNodeReader(classInfo);
-                RelationalReader endNodeReader = EntityAccessManager.getEndNodeReader(classInfo);
+            } else if (relationshipEntityRegister.containsKey(id)) {
+                FieldInfo startNodeReader = classInfo.getStartNodeReader();
+                FieldInfo endNodeReader = classInfo.getEndNodeReader();
                 neighbours.add(startNodeReader.read(entity));
                 neighbours.add(endNodeReader.read(entity));
             }
@@ -327,19 +320,20 @@ public class MappingContext {
      * @param startOrEndEntity the entity that might be the start or end node of a relationship entity
      */
     private void deregisterDependentRelationshipEntity(Object startOrEndEntity) {
-        Iterator<Long> relationshipEntityIdIterator = relationshipEntityRegister.iterator();
+        Iterator<Long> relationshipEntityIdIterator = relationshipEntityRegister.keySet().iterator();
         while (relationshipEntityIdIterator.hasNext()) {
             Long relationshipEntityId = relationshipEntityIdIterator.next();
             Object relationshipEntity = relationshipEntityRegister.get(relationshipEntityId);
-            RelationalReader startNodeReader = EntityAccessManager.getStartNodeReader(Neo4JOSGI.classInfo(metaData, relationshipEntity));
-            RelationalReader endNodeReader = EntityAccessManager.getEndNodeReader(Neo4JOSGI.classInfo(metaData, relationshipEntity));
+            final ClassInfo classInfo = metaData.classInfo(relationshipEntity);
+            FieldInfo startNodeReader = classInfo.getStartNodeReader();
+            FieldInfo endNodeReader = classInfo.getEndNodeReader();
             if (startOrEndEntity == startNodeReader.read(relationshipEntity) || startOrEndEntity == endNodeReader.read(relationshipEntity)) {
                 relationshipEntityIdIterator.remove();
             }
         }
     }
 
-    private void removeType(Class<?> type, PropertyReader identityReader) {
+    private void removeType(Class<?> type, FieldInfo identityReader) {
 
         for (Object entity : getEntities(type)) {
             purge(entity, identityReader, type);
@@ -348,54 +342,50 @@ public class MappingContext {
     }
 
 
-    /**
-     * NOTE: There was a lot of concurrent code in other classes (see commit) to prevent this method from throwing
-     * ConcurrentModificationException. This is due to: 1) not deleting through the iterator
-     * 2) using an iterative approach along with recursion and then modifying the underlying collection.
-     * To get around this we can either block all methods that are involved in the recursion stack from concurrently
-     * modifying the mapped relationship collection (previous implementation: very inefficient) to copying the collection
-     * on write (current implementation: inefficient).
-     * TODO: The best way to fix this method is to replace it with an iterative approach using a <code>Stack</code> and
-     * call remove() on the mappedRelationshipIterator. This will be both efficient and safe.
-     */
-    private void purge(Object entity, PropertyReader identityReader, Class type) {
-        Long id = (Long) identityReader.readProperty(entity);
+    private void purge(Object entity, FieldInfo fieldInfo, Class type) {
+        Long id = (Long) fieldInfo.readProperty(entity);
+        Set<Object> relEntitiesToPurge = new HashSet<>();
         if (id != null) {
             // remove a NodeEntity
-            if (!metaData.isRelationshipEntityNeo4J(type.getName(), true)) {
-                if (nodeEntityRegister.contains(id)) {
+            if (!metaData.isRelationshipEntity(type.getName())) {
+                if (nodeEntityRegister.containsKey(id)) {
                     // remove the object from the node register
                     nodeEntityRegister.remove(id);
                     // remove all relationship mappings to/from this object
-                    for (MappedRelationship mappedRelationship : relationshipRegister) {
+                    Iterator<MappedRelationship> mappedRelationshipIterator = relationshipRegister.iterator();
+                    while (mappedRelationshipIterator.hasNext()) {
+                        MappedRelationship mappedRelationship = mappedRelationshipIterator.next();
                         if (mappedRelationship.getStartNodeId() == id || mappedRelationship.getEndNodeId() == id) {
 
                             // first purge any RE mappings (if its a RE)
                             if (mappedRelationship.getRelationshipId() != null) {
                                 Object relEntity = relationshipEntityRegister.get(mappedRelationship.getRelationshipId());
                                 if (relEntity != null) {
-                                    ClassInfo relClassInfo = Neo4JOSGI.classInfo(metaData, relEntity);
-                                    PropertyReader relIdentityReader = EntityAccessManager.getIdentityPropertyReader(relClassInfo);
-                                    purge(relEntity, relIdentityReader, relClassInfo.getUnderlyingClass());
+                                    relEntitiesToPurge.add(relEntity);
                                 }
                             }
-
                             // finally remove the mapped relationship
-                            relationshipRegister.remove(mappedRelationship);
+                            mappedRelationshipIterator.remove();
                         }
                     }
                 }
             } else {
                 // remove a RelationshipEntity
-                if (relationshipEntityRegister.contains(id)) {
+                if (relationshipEntityRegister.containsKey(id)) {
                     relationshipEntityRegister.remove(id);
-                    RelationalReader startNodeReader = EntityAccessManager.getStartNodeReader(Neo4JOSGI.classInfo(metaData, entity));
+                    final ClassInfo classInfo = metaData.classInfo(entity);
+                    FieldInfo startNodeReader = classInfo.getStartNodeReader();
                     Object startNode = startNodeReader.read(entity);
                     removeEntity(startNode);
-                    RelationalReader endNodeReader = EntityAccessManager.getEndNodeReader(Neo4JOSGI.classInfo(metaData, entity));
+                    FieldInfo endNodeReader = classInfo.getEndNodeReader();
                     Object endNode = endNodeReader.read(entity);
                     removeEntity(endNode);
                 }
+            }
+            for (Object relEntity : relEntitiesToPurge) {
+                ClassInfo relClassInfo = metaData.classInfo(relEntity);
+                FieldInfo relIdentityReader = relClassInfo.identityField();
+                purge(relEntity, relIdentityReader, relClassInfo.getUnderlyingClass());
             }
         }
     }
@@ -409,18 +399,17 @@ public class MappingContext {
     }
 
     private void remember(Object entity) {
-        ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, entity);
-        Long id = (Long) EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(entity);
-        objectMemo.remember(id, entity, classInfo);
+        ClassInfo classInfo = metaData.classInfo(entity);
+        Long id = (Long) classInfo.identityField().readProperty(entity);
+        identityMap.remember(id, entity, classInfo);
     }
 
     private void collectLabelHistory(Object entity) {
-        ClassInfo classInfo = Neo4JOSGI.classInfo(metaData, entity);
+        ClassInfo classInfo = metaData.classInfo(entity);
         FieldInfo fieldInfo = classInfo.labelFieldOrNull();
         if (fieldInfo != null) {
-            FieldReader reader = new FieldReader(classInfo, fieldInfo);
-            Collection<String> labels = (Collection<String>) reader.read(entity);
-            Long id = (Long) EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(entity);
+            Collection<String> labels = (Collection<String>) fieldInfo.read(entity);
+            Long id = (Long) classInfo.identityField().readProperty(entity);
             labelHistory(id).push(labels);
         }
     }

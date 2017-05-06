@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -16,23 +16,13 @@ package org.neo4j.ogm.cypher.query;
 import java.util.Map;
 
 import org.neo4j.ogm.request.GraphModelRequest;
-import org.neo4j.ogm.request.Statement;
-import org.neo4j.ogm.session.Utils;
 
 /**
  * @author Vince Bickers
  */
 public class DefaultGraphModelRequest extends PagingAndSortingQuery implements GraphModelRequest {
 
-    private final static String[] resultDataContents = new String[] {"graph"};
-
-    public DefaultGraphModelRequest(Statement request) {
-        this(request.getStatement(), request.getParameters());
-    }
-
-    public DefaultGraphModelRequest(String cypher) {
-        this(cypher, Utils.map());
-    }
+    private final static String[] resultDataContents = new String[]{"graph"};
 
     public DefaultGraphModelRequest(String cypher, Map<String, ?> parameters) {
         super(cypher, parameters);

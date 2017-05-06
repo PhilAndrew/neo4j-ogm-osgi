@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -21,12 +21,12 @@ import java.util.List;
  */
 public class AdapterUtils {
 
-	public static Iterable<Object> convertToIterable(Object array) {
-		List<Object> list = new ArrayList<>();
-		int length = Array.getLength(array);
-		for (int i = 0; i < length; i++) {
-			list.add(Array.get(array, i));
-		}
-		return list;
-	}
+    public static Iterable<Object> convertToIterable(Object array) {
+        List<Object> list = new ArrayList<>();
+        int length = Array.getLength(array);
+        for (int i = 0; i < length; i++) {
+            list.add(Array.get(array, i));
+        }
+        return list;
+    }
 }

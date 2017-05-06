@@ -34,6 +34,7 @@ public class Neo4JOSGI {
 
             ClassInfo info = null;
             try {
+                System.out.println(fullOrPartialClassName);
                 info = new ClassInfo(Class.forName(fullOrPartialClassName));
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();

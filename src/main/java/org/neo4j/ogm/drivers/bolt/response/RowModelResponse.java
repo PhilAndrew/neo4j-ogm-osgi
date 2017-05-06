@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -25,18 +25,18 @@ import org.neo4j.ogm.transaction.TransactionManager;
  */
 public class RowModelResponse extends BoltResponse<RowModel> {
 
-	private final ResultAdapter<Map<String, Object>, RowModel> adapter = new BoltRowModelAdapter();
+    private final ResultAdapter<Map<String, Object>, RowModel> adapter = new BoltRowModelAdapter();
 
-	public RowModelResponse(StatementResult result, TransactionManager transactionManager) {
-		super(result, transactionManager);
-		((BoltRowModelAdapter) adapter).setColumns(Arrays.asList(columns()));
-	}
+    public RowModelResponse(StatementResult result, TransactionManager transactionManager) {
+        super(result, transactionManager);
+        ((BoltRowModelAdapter) adapter).setColumns(Arrays.asList(columns()));
+    }
 
-	@Override
-	public RowModel fetchNext() {
-		if (result.hasNext()) {
-			return adapter.adapt(result.next().asMap());
-		}
-		return null;
-	}
+    @Override
+    public RowModel fetchNext() {
+        if (result.hasNext()) {
+            return adapter.adapt(result.next().asMap());
+        }
+        return null;
+    }
 }

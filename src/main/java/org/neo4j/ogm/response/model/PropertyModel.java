@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -34,8 +34,6 @@ public class PropertyModel<K, V> implements Property<K, V> {
         return new PropertyModel<>(key, value);
     }
 
-    public PropertyModel() {}
-
     public PropertyModel(K key, V value) {
         this.key = key;
         this.value = value;
@@ -45,16 +43,8 @@ public class PropertyModel<K, V> implements Property<K, V> {
         return key;
     }
 
-    public void setKey(K key) {
-        this.key = key;
-    }
-
     public V getValue() {
         return value;
-    }
-
-    public void setValue(V value) {
-        this.value = value;
     }
 
     public String toString() {
@@ -87,7 +77,6 @@ public class PropertyModel<K, V> implements Property<K, V> {
         PropertyModel property = (PropertyModel) o;
 
         return key.equals(property.key) && value.equals(property.value);
-
     }
 
     @Override

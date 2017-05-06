@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -17,10 +17,10 @@ package org.neo4j.ogm.session;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.neo4j.ogm.MetaData;
 import org.neo4j.ogm.autoindex.AutoIndexManager;
 import org.neo4j.ogm.config.Configuration;
-import org.neo4j.ogm.config.Components;
+import org.neo4j.ogm.driver.DriverManager;
+import org.neo4j.ogm.metadata.MetaData;
 import org.neo4j.ogm.session.event.EventListener;
 
 /**
@@ -35,19 +35,10 @@ public class SessionFactory {
     private final MetaData metaData;
     private final List<EventListener> eventListeners;
 
-    private SessionFactory(Configuration configuration, MetaData metaData) {
-        if (configuration != null) {
-            Components.configure(configuration);
-        }
-        this.metaData = metaData;
-        AutoIndexManager autoIndexManager = new AutoIndexManager(this.metaData, Components.driver());
-        autoIndexManager.build();
-        this.eventListeners = new CopyOnWriteArrayList<>();
-    }
-
     /**
      * Constructs a new {@link SessionFactory} by initialising the object-graph mapping meta-data from the given list of domain
-     * object packages.
+     * object packages and starts up the Neo4j database in embedded mode.  If the embedded driver is not available this method
+     * will throw a <code>Exception</code>.
      * <p>
      * The package names passed to this constructor should not contain wildcards or trailing full stops, for example,
      * "org.springframework.data.neo4j.example.domain" would be fine.  The default behaviour is for sub-packages to be scanned
@@ -58,26 +49,12 @@ public class SessionFactory {
      * @param packages The packages to scan for domain objects
      */
     public SessionFactory(String... packages) {
-        this(null, new MetaData(packages));
+        this(new Configuration.Builder().build(), packages);
     }
 
     /**
      * Constructs a new {@link SessionFactory} by initialising the object-graph mapping meta-data from the given list of domain
-     * object classes.
-     * <p>
-     * This will only load the classes explicitly listed. No other classes will be loaded.
-     * </p>
-     * Indexes will also be checked or built if configured.
-     *
-     * @param classes The classes to load as domain objects
-     */
-    public SessionFactory(Class... classes) {
-        this(null, new MetaData(classes));
-    }
-
-    /**
-     * Constructs a new {@link SessionFactory} by initialising the object-graph mapping meta-data from the given list of domain
-     * object packages, and also sets the configuration to be used.
+     * object packages, and also sets the baseConfiguration to be used.
      * <p>
      * The package names passed to this constructor should not contain wildcards or trailing full stops, for example,
      * "org.springframework.data.neo4j.example.domain" would be fine.  The default behaviour is for sub-packages to be scanned
@@ -85,26 +62,22 @@ public class SessionFactory {
      * </p>
      * Indexes will also be checked or built if configured.
      *
-     * @param configuration The configuration to use
+     * @param configuration The baseConfiguration to use
      * @param packages The packages to scan for domain objects
      */
     public SessionFactory(Configuration configuration, String... packages) {
-        this(configuration, new MetaData(packages));
-    }
-
-    /**
-     * Constructs a new {@link SessionFactory} by initialising the object-graph mapping meta-data from the given list of domain
-     * object classes, and also sets the configuration to be used.
-     * <p>
-     * This will only load the classes explicitly listed. No other classes will be loaded.
-     * </p>
-     * Indexes will also be checked or built if configured.
-     *
-     * @param configuration The configuration to use
-     * @param classes The classes to load as domain objects
-     */
-    public SessionFactory(Configuration configuration, Class... classes) {
-        this(configuration, new MetaData(classes));
+        // TODO: This if check is only required because of testing of the embedded driver.
+        // TODO: Our tests shouldn't switch driver type halfway through.
+        if (DriverManager.getDriver() == null || DriverManager.getDriver().getConfiguration() ==null
+                || !DriverManager.getDriver().getConfiguration().equals(configuration)) {
+            // configuration has changed : switch the driver
+            DriverManager.register(configuration.getDriverClassName());
+            DriverManager.getDriver().configure(configuration);
+        }
+        this.metaData = new MetaData(packages);
+        AutoIndexManager autoIndexManager = new AutoIndexManager(this.metaData, DriverManager.getDriver(), configuration);
+        autoIndexManager.build();
+        this.eventListeners = new CopyOnWriteArrayList<>();
     }
 
     /**
@@ -117,14 +90,14 @@ public class SessionFactory {
     }
 
     /**
-     * Opens a new Neo4j mapping {@link Session} using the Driver specified in the OGM configuration
+     * Opens a new Neo4j mapping {@link Session} using the Driver specified in the OGM baseConfiguration
      * The driver should be configured to connect to the database using the appropriate
      * DriverConfig
      *
      * @return A new {@link Session}
      */
     public Session openSession() {
-        return new Neo4jSession(metaData, Components.driver(), eventListeners);
+        return new Neo4jSession(metaData, DriverManager.getDriver(), eventListeners);
     }
 
     /**

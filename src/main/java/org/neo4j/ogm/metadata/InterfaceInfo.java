@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -22,8 +22,8 @@ public class InterfaceInfo {
 
     private final String interfaceName;
 
-    public InterfaceInfo(String name) {
-        this.interfaceName = name;
+    InterfaceInfo(Class iface) {
+        this.interfaceName = iface.getName();
     }
 
     String name() {
@@ -32,21 +32,5 @@ public class InterfaceInfo {
 
     public String toString() {
         return name();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        InterfaceInfo that = (InterfaceInfo) o;
-
-        return interfaceName.equals(that.interfaceName);
-
-    }
-
-    @Override
-    public int hashCode() {
-        return interfaceName.hashCode();
     }
 }

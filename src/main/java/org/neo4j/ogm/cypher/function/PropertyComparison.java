@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -16,10 +16,10 @@ package org.neo4j.ogm.cypher.function;
 
 import static org.neo4j.ogm.cypher.ComparisonOperator.*;
 
-import org.neo4j.ogm.cypher.Filter;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.neo4j.ogm.cypher.Filter;
 
 /**
  * @author Jasper Blues
@@ -29,26 +29,13 @@ public class PropertyComparison implements FilterFunction<Object> {
     private Object value;
     private Filter filter;
 
-    public PropertyComparison() {
-    }
-
     public PropertyComparison(Object value) {
         this.value = value;
-    }
-
-    public PropertyComparison(Object value, Filter filter) {
-        this.value = value;
-        this.filter = filter;
     }
 
     @Override
     public Object getValue() {
         return this.value;
-    }
-
-    @Override
-    public void setValue(Object value) {
-        this.value = value;
     }
 
     @Override

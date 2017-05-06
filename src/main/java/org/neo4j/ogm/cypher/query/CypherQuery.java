@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -20,7 +20,6 @@ import org.neo4j.ogm.request.Statement;
 
 /**
  * Simple encapsulation of a Cypher query and its parameters
- *
  * Note, this object will be transformed directly to JSON so don't add anything here that is
  * not part of the HTTP Transactional endpoint syntax
  *

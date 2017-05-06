@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,11 +13,11 @@
 
 package org.neo4j.ogm.typeconversion;
 
-import org.neo4j.ogm.annotation.typeconversion.DateString;
-import org.neo4j.ogm.classloader.MetaDataClassLoader;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
+
+import org.neo4j.ogm.annotation.typeconversion.DateString;
+import org.neo4j.ogm.classloader.MetaDataClassLoader;
 
 /**
  * @author Vince Bickers
@@ -35,42 +35,42 @@ public abstract class ConvertibleTypes {
 
     public static AttributeConverter<?, ?> getDateCollectionConverter(String collectionType) {
         try {
-            Class collectionClazz = MetaDataClassLoader.loadClass(collectionType);//Class.forName(collectionType);
-            return new DateCollectionStringConverter(DateString.ISO_8601,collectionClazz);
+            Class collectionClazz = MetaDataClassLoader.loadClassOsgi(collectionType);// Class.forName(collectionType, false, Thread.currentThread().getContextClassLoader());
+            return new DateCollectionStringConverter(DateString.ISO_8601, collectionClazz);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     public static AttributeConverter<?, ?> getEnumConverter(Class enumClass) {
-            return new EnumStringConverter(enumClass);
+        return new EnumStringConverter(enumClass);
     }
 
     public static AttributeConverter<?, ?> getEnumArrayConverter(Class enumClass) {
-            return new EnumArrayStringConverter(enumClass);
+        return new EnumArrayStringConverter(enumClass);
     }
 
     public static AttributeConverter<?, ?> getEnumCollectionConverter(Class enumClass, String collectionType) {
         try {
-            Class collectionClazz = MetaDataClassLoader.loadClass(collectionType);//Class.forName(collectionType);
-            return new EnumCollectionStringConverter(enumClass,collectionClazz);
+            Class collectionClazz = Class.forName(collectionType, false, Thread.currentThread().getContextClassLoader());
+            return new EnumCollectionStringConverter(enumClass, collectionClazz);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static AttributeConverter<?,?> getBigIntegerConverter() {
+    public static AttributeConverter<?, ?> getBigIntegerConverter() {
         return new NumberStringConverter(BigInteger.class);
     }
 
-    public static AttributeConverter<?,?> getBigIntegerArrayConverter() {
+    public static AttributeConverter<?, ?> getBigIntegerArrayConverter() {
         return new NumberArrayStringConverter(BigInteger.class);
     }
 
-    public static AttributeConverter<?,?> getBigIntegerCollectionConverter(String collectionType) {
+    public static AttributeConverter<?, ?> getBigIntegerCollectionConverter(String collectionType) {
         try {
-            Class collectionClazz = MetaDataClassLoader.loadClass(collectionType);//Class.forName(collectionType);
-            return new NumberCollectionStringConverter(BigInteger.class,collectionClazz);
+            Class collectionClazz = Class.forName(collectionType, false, Thread.currentThread().getContextClassLoader());
+            return new NumberCollectionStringConverter(BigInteger.class, collectionClazz);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -83,14 +83,16 @@ public abstract class ConvertibleTypes {
     public static AttributeConverter<?, ?> getBigDecimalArrayConverter() {
         return new NumberArrayStringConverter(BigDecimal.class);
     }
+
     public static AttributeConverter<?, ?> getBigDecimalCollectionConverter(String collectionType) {
         try {
-            Class collectionClazz = MetaDataClassLoader.loadClass(collectionType);//Class.forName(collectionType);
-            return new NumberCollectionStringConverter(BigDecimal.class,collectionClazz);
+            Class collectionClazz = Class.forName(collectionType, false, Thread.currentThread().getContextClassLoader());
+            return new NumberCollectionStringConverter(BigDecimal.class, collectionClazz);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
     public static AttributeConverter<?, ?> getByteArrayBase64Converter() {
         return new ByteArrayBase64Converter();
     }
@@ -99,4 +101,11 @@ public abstract class ConvertibleTypes {
         return new ByteArrayWrapperBase64Converter();
     }
 
+    public static AttributeConverter<?, ?> getInstantConverter() {
+        return new InstantStringConverter();
+    }
+
+    public static AttributeConverter<?, ?> getLocalDateConverter() {
+        return new LocalDateStringConverter();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -18,21 +18,18 @@ import java.lang.annotation.*;
 /**
  * Establishes the mapping between a domain entity attribute
  * and a node or relationship property in the graph.
- *
  * This annotation is not needed if the mapping can be
  * derived by the OGM, according to the following
  * heuristics:
- *
- *      an accessor method
+ * an accessor method
  *
  * @author Vince Bickers
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target(ElementType.FIELD)
 @Inherited
 public @interface Property {
 
-    String CLASS = "org.neo4j.ogm.annotation.Property";
     String NAME = "name";
 
     String name() default "";

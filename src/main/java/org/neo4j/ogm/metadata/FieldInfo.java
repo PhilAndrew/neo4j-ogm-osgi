@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -14,19 +14,19 @@
 package org.neo4j.ogm.metadata;
 
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.Labels;
 import org.neo4j.ogm.annotation.Property;
 import org.neo4j.ogm.annotation.Relationship;
-import org.neo4j.ogm.classloader.MetaDataClassLoader;
-import org.neo4j.ogm.context.EntityGraphMapper;
+import org.neo4j.ogm.session.Utils;
 import org.neo4j.ogm.typeconversion.AttributeConverter;
 import org.neo4j.ogm.typeconversion.CompositeAttributeConverter;
+import org.neo4j.ogm.utils.ClassUtils;
 import org.neo4j.ogm.utils.RelationshipUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Vince Bickers
@@ -35,36 +35,38 @@ import org.slf4j.LoggerFactory;
  */
 public class FieldInfo {
 
-    private static final String primitives = "I,J,S,B,C,F,D,Z,[I,[J,[S,[B,[C,[F,[D,[Z";
-    private static final String autoboxers =
-            "Ljava/lang/Object;" +
-            "Ljava/lang/Character;" +
-            "Ljava/lang/Byte;" +
-            "Ljava/lang/Short;" +
-            "Ljava/lang/Integer;" +
-            "Ljava/lang/Long;" +
-            "Ljava/lang/Float;" +
-            "Ljava/lang/Double;" +
-            "Ljava/lang/Boolean;" +
-            "Ljava/lang/String;" +
-            "[Ljava/lang/Object;" +
-            "[Ljava/lang/Character;" +
-            "[Ljava/lang/Byte;" +
-            "[Ljava/lang/Short;" +
-            "[Ljava/lang/Integer;" +
-            "[Ljava/lang/Long;" +
-            "[Ljava/lang/Float;" +
-            "[Ljava/lang/Double;" +
-            "[Ljava/lang/Boolean;" +
-            "[Ljava/lang/String;";
-
+    private static final String PRIMITIVES = "char,byte,short,int,long,float,double,boolean,char[],byte[],short[],int[],long[],float[],double[],boolean[]";
+    private static final String AUTOBOXERS =
+            "java.lang.Object" +
+                    "java.lang.Character" +
+                    "java.lang.Byte" +
+                    "java.lang.Short" +
+                    "java.lang.Integer" +
+                    "java.lang.Long" +
+                    "java.lang.Float" +
+                    "java.lang.Double" +
+                    "java.lang.Boolean" +
+                    "java.lang.String" +
+                    "java.lang.Object[]" +
+                    "java.lang.Character[]" +
+                    "java.lang.Byte[]" +
+                    "java.lang.Short[]" +
+                    "java.lang.Integer[]" +
+                    "java.lang.Long[]" +
+                    "java.lang.Float[]" +
+                    "java.lang.Double[]" +
+                    "java.lang.Boolean[]" +
+                    "java.lang.String[]";
 
 
     private final String name;
     private final String descriptor;
     private final String typeParameterDescriptor;
     private final ObjectAnnotations annotations;
-
+    private final boolean isArray;
+    private final ClassInfo containingClassInfo;
+    private final Field field;
+    private final Class<?> fieldType;
     /**
      * The associated attribute converter for this field, if applicable, otherwise null.
      */
@@ -79,27 +81,22 @@ public class FieldInfo {
     /**
      * Constructs a new {@link FieldInfo} based on the given arguments.
      *
-     * @param name                    The name of the field
-     * @param descriptor              The field descriptor that expresses the type of the field using Java signature string notation
      * @param typeParameterDescriptor The descriptor that expresses the generic type parameter, which may be <code>null</code>
-     *                                if that's not appropriate
-     * @param annotations             The {@link ObjectAnnotations} applied to the field
+     * if that's not appropriate
+     * @param annotations The {@link ObjectAnnotations} applied to the field
      */
-    public FieldInfo(String name, String descriptor, String typeParameterDescriptor, ObjectAnnotations annotations, String fromWhere) {
-
-        LOGGER.info("creating FieldInfo with");
-        LOGGER.info("name: " + name);
-        LOGGER.info("descriptor: " + descriptor);
-        LOGGER.info("typeParameterDescriptor: " + typeParameterDescriptor);
-        LOGGER.info("fromWhere: " + fromWhere);
-
-        this.name = name;
-
-        this.descriptor = descriptor;
+    public FieldInfo(ClassInfo classInfo, Field field, String typeParameterDescriptor, ObjectAnnotations annotations) {
+        this.containingClassInfo = classInfo;
+        this.field = field;
+        this.fieldType = field.getType();
+        field.getModifiers();
+        this.isArray = field.getType().isArray();
+        this.name = field.getName();
+        this.descriptor = field.getType().getTypeName();
         this.typeParameterDescriptor = typeParameterDescriptor;
         this.annotations = annotations;
         if (!this.annotations.isEmpty()) {
-            Object converter = getAnnotations().getConverter();
+            Object converter = getAnnotations().getConverter(this.fieldType);
             if (converter instanceof AttributeConverter) {
                 setPropertyConverter((AttributeConverter<?, ?>) converter);
             } else if (converter instanceof CompositeAttributeConverter) {
@@ -109,7 +106,6 @@ public class FieldInfo {
                         "The converter for field %s is neither an instance of AttributeConverter or CompositeAttributeConverter",
                         this.name));
             }
-
         }
     }
 
@@ -122,7 +118,7 @@ public class FieldInfo {
     public String property() {
         if (persistableAsProperty()) {
             if (annotations != null) {
-                AnnotationInfo propertyAnnotation = annotations.get(Property.CLASS);
+                AnnotationInfo propertyAnnotation = annotations.get(Property.class);
                 if (propertyAnnotation != null) {
                     return propertyAnnotation.get(Property.NAME, getName());
                 }
@@ -135,7 +131,7 @@ public class FieldInfo {
     public String relationship() {
         if (!persistableAsProperty()) {
             if (annotations != null) {
-                AnnotationInfo relationshipAnnotation = annotations.get(Relationship.CLASS);
+                AnnotationInfo relationshipAnnotation = annotations.get(Relationship.class);
                 if (relationshipAnnotation != null) {
                     return relationshipAnnotation.get(Relationship.TYPE, RelationshipUtils.inferRelationshipType(getName()));
                 }
@@ -148,7 +144,7 @@ public class FieldInfo {
     public String relationshipTypeAnnotation() {
         if (!persistableAsProperty()) {
             if (annotations != null) {
-                AnnotationInfo relationshipAnnotation = annotations.get(Relationship.CLASS);
+                AnnotationInfo relationshipAnnotation = annotations.get(Relationship.class);
                 if (relationshipAnnotation != null) {
                     return relationshipAnnotation.get(Relationship.TYPE, null);
                 }
@@ -161,11 +157,13 @@ public class FieldInfo {
         return annotations;
     }
 
+    // should be improved, as unmanaged types (like ZonedDateTime) are not detected as property but as relationship
+    // see #347
     public boolean persistableAsProperty() {
 
-        return primitives.contains(descriptor)
-                || (autoboxers.contains(descriptor) && typeParameterDescriptor == null)
-                || (typeParameterDescriptor != null && autoboxers.contains(typeParameterDescriptor))
+        return PRIMITIVES.contains(descriptor)
+                || (AUTOBOXERS.contains(descriptor) && typeParameterDescriptor == null)
+                || (typeParameterDescriptor != null && AUTOBOXERS.contains(typeParameterDescriptor))
                 || propertyConverter != null
                 || compositeConverter != null;
     }
@@ -200,7 +198,7 @@ public class FieldInfo {
 
     public String relationshipDirection(String defaultDirection) {
         if (relationship() != null) {
-            AnnotationInfo annotationInfo = getAnnotations().get(Relationship.CLASS);
+            AnnotationInfo annotationInfo = getAnnotations().get(Relationship.class);
             if (annotationInfo == null) {
                 return defaultDirection;
             }
@@ -212,13 +210,13 @@ public class FieldInfo {
     public boolean isTypeOf(Class<?> type) {
 
         while (type != null) {
-            String typeSignature = "L" + type.getName().replace(".", "/") + ";";
+            String typeSignature = type.getName();
             if (descriptor != null && descriptor.equals(typeSignature)) {
                 return true;
             }
             // #issue 42: check interfaces when types are defined using generics as interface extensions
             for (Class<?> iface : type.getInterfaces()) {
-                typeSignature = "L" + iface.getName().replace(".", "/") + ";";
+                typeSignature = iface.getName();
                 if (descriptor != null && descriptor.equals(typeSignature)) {
                     return true;
                 }
@@ -229,27 +227,18 @@ public class FieldInfo {
     }
 
     public boolean isIterable() {
-        String descriptorClass = getCollectionClassname();
-        try {
-            Class descriptorClazz = MetaDataClassLoader.loadClass(descriptorClass);
-            if (Iterable.class.isAssignableFrom(descriptorClazz)) {
-                return true;
-            }
-        } catch (ClassNotFoundException e) {
-            //e.printStackTrace();
-        }
-        return false;
+        return Iterable.class.isAssignableFrom(fieldType);
     }
 
     public boolean isParameterisedTypeOf(Class<?> type) {
         while (type != null) {
-            String typeSignature = "L" + type.getName().replace(".", "/") + ";";
+            String typeSignature = type.getName();
             if (typeParameterDescriptor != null && typeParameterDescriptor.equals(typeSignature)) {
                 return true;
             }
             // #issue 42: check interfaces when types are defined using generics as interface extensions
             for (Class<?> iface : type.getInterfaces()) {
-                typeSignature = "L" + iface.getName().replace(".", "/") + ";";
+                typeSignature = iface.getName();
                 if (typeParameterDescriptor != null && typeParameterDescriptor.equals(typeSignature)) {
                     return true;
                 }
@@ -261,13 +250,13 @@ public class FieldInfo {
 
     public boolean isArrayOf(Class<?> type) {
         while (type != null) {
-            String typeSignature = "[L" + type.getName().replace(".", "/") + ";";
-            if (descriptor != null && descriptor.equals(typeSignature)) {
+            String typeSignature = type.getName();
+            if (descriptor != null && descriptor.equals(typeSignature + "[]")) {
                 return true;
             }
             // #issue 42: check interfaces when types are defined using generics as interface extensions
             for (Class<?> iface : type.getInterfaces()) {
-                typeSignature = "[L" + iface.getName().replace(".", "/") + ";";
+                typeSignature = iface.getName();
                 if (descriptor != null && descriptor.equals(typeSignature)) {
                     return true;
                 }
@@ -283,11 +272,7 @@ public class FieldInfo {
      * @return collection class name
      */
     public String getCollectionClassname() {
-        String descriptorClass = descriptor.replace("/", ".");
-        if (descriptorClass.startsWith("L")) {
-            descriptorClass = descriptorClass.substring(1, descriptorClass.length() - 1); //remove the leading L and trailing ;
-        }
-        return descriptorClass;
+        return descriptor;
     }
 
     public boolean isScalar() {
@@ -295,15 +280,19 @@ public class FieldInfo {
     }
 
     public boolean isLabelField() {
-        return this.getAnnotations().get(Labels.CLASS) != null;
+        return this.getAnnotations().get(Labels.class) != null;
     }
 
     public boolean isArray() {
-        return descriptor.startsWith("[");
+        return isArray;
     }
 
     public boolean hasAnnotation(String annotationName) {
         return getAnnotations().get(annotationName) != null;
+    }
+
+    public boolean hasAnnotation(Class<?> annotationNameClass) {
+        return getAnnotations().get(annotationNameClass.getName()) != null;
     }
 
     /**
@@ -311,13 +300,7 @@ public class FieldInfo {
      *
      * @return the descriptor if the field is scalar or an array, otherwise the type parameter descriptor.
      */
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(FieldInfo.class);
-
     public String getTypeDescriptor() {
-
-        LOGGER.debug("descriptor: " + descriptor);
-        LOGGER.debug("typeParameterDescriptor: " + typeParameterDescriptor);
 
         if (!isIterable() || isArray()) {
             return descriptor;
@@ -349,7 +332,116 @@ public class FieldInfo {
      * @return <code>true</code> is this field is a constraint rather than just a plain index.
      */
     public boolean isConstraint() {
-        AnnotationInfo indexAnnotation = this.getAnnotations().get(Index.class.getCanonicalName());
+        AnnotationInfo indexAnnotation = this.getAnnotations().get(Index.class.getName());
         return indexAnnotation != null && indexAnnotation.get("unique", "false").equals("true");
+    }
+
+    // =================================================================================================================
+    // From FieldAccessor
+    // =================================================================================================================
+
+
+    public static void write(Field field, Object instance, Object value) {
+        try {
+            field.setAccessible(true);
+            field.set(instance, value);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Object read(Field field, Object instance) {
+        try {
+            field.setAccessible(true);
+            return field.get(instance);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void write(Object instance, Object value) {
+
+        if (hasPropertyConverter()) {
+            value = getPropertyConverter().toEntityAttribute(value);
+            write(field, instance, value);
+        } else {
+            if (isScalar()) {
+                String descriptor = getTypeDescriptor();
+                value = Utils.coerceTypes(ClassUtils.getType(descriptor), value);
+            }
+            write(field, instance, value);
+        }
+    }
+
+    public Class<?> type() {
+        Class convertedType = convertedType();
+        if (convertedType != null) {
+            return convertedType;
+        }
+        return fieldType;
+    }
+
+    public String relationshipName() {
+        return this.relationship();
+    }
+
+    public boolean forScalar() {
+        return !Iterable.class.isAssignableFrom(type()) && !type().isArray();
+    }
+
+    public String typeParameterDescriptor() {
+        return getTypeDescriptor();
+    }
+
+    public Object read(Object instance) {
+        return read(containingClassInfo.getField(this), instance);
+    }
+
+    public Object readProperty(Object instance) {
+        if (hasCompositeConverter()) {
+            throw new IllegalStateException(
+                    "The readComposite method should be used for fields with a CompositeAttributeConverter");
+        }
+        Object value = read(containingClassInfo.getField(this), instance);
+        if (hasPropertyConverter()) {
+            value = getPropertyConverter().toGraphProperty(value);
+        }
+        return value;
+    }
+
+    public Map<String, ?> readComposite(Object instance) {
+        if (!hasCompositeConverter()) {
+            throw new IllegalStateException(
+                    "readComposite should only be used when a field is annotated with a CompositeAttributeConverter");
+        }
+        Object value = read(containingClassInfo.getField(this), instance);
+        return getCompositeConverter().toGraphProperties(value);
+    }
+
+    public String relationshipType() {
+        return relationship();
+    }
+
+    public String propertyName() {
+        return property();
+    }
+
+    public boolean isComposite() {
+        return hasCompositeConverter();
+    }
+
+    public String relationshipDirection() {
+        ObjectAnnotations annotations = getAnnotations();
+        if (annotations != null) {
+            AnnotationInfo relationshipAnnotation = annotations.get(Relationship.class);
+            if (relationshipAnnotation != null) {
+                return relationshipAnnotation.get(Relationship.DIRECTION, Relationship.UNDIRECTED);
+            }
+        }
+        return Relationship.UNDIRECTED;
+    }
+
+    public String typeDescriptor() {
+        return getTypeDescriptor();
     }
 }

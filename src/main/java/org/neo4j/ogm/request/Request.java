@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -27,9 +27,12 @@ import org.neo4j.ogm.response.Response;
 public interface Request {
 
     Response<GraphModel> execute(GraphModelRequest query);
-    Response<RowModel> execute(RowModelRequest query);
-    Response<RowModel> execute(DefaultRequest query);
-    Response<GraphRowListModel> execute(GraphRowListModelRequest query);
-    Response<RestModel> execute(RestModelRequest query);
 
+    Response<RowModel> execute(RowModelRequest query);
+
+    Response<RowModel> execute(DefaultRequest query);
+
+    Response<GraphRowListModel> execute(GraphRowListModelRequest query);
+
+    Response<RestModel> execute(RestModelRequest query);
 }

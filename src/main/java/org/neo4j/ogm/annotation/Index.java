@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -20,15 +20,11 @@ import java.lang.annotation.Target;
 /**
  * Fields and properties marked with this annotation will notify the OGM that they
  * should be used as part of an index and/or for use during lookups and merging.
- *
  * Fields marked with <code>unique=false</code> and <code>primary=true</code> will be ignored.
- *
  * Only one index per class hierarchy may be marked as <code>primary</code>.
- *
  * If index auto generation is turned on then classes containing <code>@Index</code>
  * will be used. Indexes will always be generated with the containing class's label and
  * the annotated property's name.
- *
  * Index generation behaviour can be defined in <code>ogm.properties</code> by
  * defining a property called: <code>indexes.auto</code> and providing
  * a value of:
@@ -51,14 +47,17 @@ import java.lang.annotation.Target;
 @Target(value = ElementType.FIELD)
 public @interface Index {
 
-	/**
-	 * Indicates whether to apply a unique constraint on this property, defaults to
-	 * false.
-	 */
-	boolean unique() default false;
+    /**
+     * Indicates whether to apply a unique constraint on this property, defaults to
+     * false.
+     */
+    boolean unique() default false;
 
-	/**
-	 * Indicates this constraint (unique index) should be used as the key for merges and loading by id.
-	 */
-	boolean primary() default false;
+    /**
+     * Indicates this constraint (unique index) should be used as the key for merges and loading by id.
+     *
+     * @deprecated Use @Id instead.
+     */
+    @Deprecated
+    boolean primary() default false;
 }

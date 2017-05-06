@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -14,11 +14,8 @@
 package org.neo4j.ogm.session.delegates;
 
 
-import org.neo4j.ogm.Neo4JOSGI;
-import org.neo4j.ogm.entity.io.EntityAccessManager;
 import org.neo4j.ogm.exception.MappingException;
 import org.neo4j.ogm.metadata.ClassInfo;
-import org.neo4j.ogm.session.Capability;
 import org.neo4j.ogm.session.Neo4jSession;
 
 /**
@@ -26,35 +23,35 @@ import org.neo4j.ogm.session.Neo4jSession;
  */
 public class GraphIdDelegate {
 
-	private final Neo4jSession session;
+    private final Neo4jSession session;
 
-	public GraphIdDelegate(Neo4jSession session) {
-		this.session = session;
-	}
+    public GraphIdDelegate(Neo4jSession session) {
+        this.session = session;
+    }
 
-	public Long resolveGraphIdFor(Object possibleEntity) {
-		if (possibleEntity != null) {
-			ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), possibleEntity);
-			try {
-				if (classInfo != null) {
-					Object id = EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(possibleEntity);
-					if (id != null) {
-						return (long) id;
-					}
-				}
-			} catch (MappingException me) {
-				//Possibly no identity field on the entity. One example is an Enum- it won't have an identity field.
-				return null;
-			}
-		}
-		return null;
-	}
+    public Long resolveGraphIdFor(Object possibleEntity) {
+        if (possibleEntity != null) {
+            ClassInfo classInfo = session.metaData().classInfo(possibleEntity);
+            try {
+                if (classInfo != null) {
+                    Object id = classInfo.identityField().readProperty(possibleEntity);
+                    if (id != null) {
+                        return (long) id;
+                    }
+                }
+            } catch (MappingException me) {
+                //Possibly no identity field on the entity. One example is an Enum- it won't have an identity field.
+                return null;
+            }
+        }
+        return null;
+    }
 
-	public boolean detachNodeEntity(Long id) {
-		return session.context().detachNodeEntity(id);
-	}
+    public boolean detachNodeEntity(Long id) {
+        return session.context().detachNodeEntity(id);
+    }
 
-	public boolean detachRelationshipEntity(Long id) {
-		return session.context().detachRelationshipEntity(id);
-	}
+    public boolean detachRelationshipEntity(Long id) {
+        return session.context().detachRelationshipEntity(id);
+    }
 }

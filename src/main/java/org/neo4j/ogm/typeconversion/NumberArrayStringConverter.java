@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -17,7 +17,6 @@ import java.lang.reflect.Array;
 /**
  * The NumberStringConverter can be used to convert any java object array containing values that extend
  * java.lang.Number to and from its String array representation.
- *
  * By default, the OGM will automatically convert arrays of BigInteger and BigDecimal
  * entity attributes using this converter.
  *
@@ -51,16 +50,16 @@ public class NumberArrayStringConverter implements AttributeConverter<Number[], 
         if (stringValues == null) {
             return null;
         }
-        Number[] values = (Number[])Array.newInstance(numberClass,stringValues.length);
+        Number[] values = (Number[]) Array.newInstance(numberClass, stringValues.length);
 
         int i = 0;
         try {
             for (String num : stringValues) {
-                values[i++] =numberClass.getDeclaredConstructor(String.class).newInstance(num);
+                values[i++] = numberClass.getDeclaredConstructor(String.class).newInstance(num);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-       return values;
+        return values;
     }
 }

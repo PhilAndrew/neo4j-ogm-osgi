@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -19,20 +19,20 @@ import org.neo4j.ogm.result.adapter.RowModelAdapter;
  */
 public class BoltRowModelAdapter extends RowModelAdapter {
 
-	private BoltEntityAdapter entityAdapter = new BoltEntityAdapter();
+    private BoltEntityAdapter entityAdapter = new BoltEntityAdapter();
 
-	@Override
-	public boolean isPath(Object value) {
-		return entityAdapter.isPath(value);
-	}
+    @Override
+    public boolean isPath(Object value) {
+        return entityAdapter.isPath(value);
+    }
 
-	@Override
-	public boolean isNode(Object value) {
-		return entityAdapter.isNode(value);
-	}
+    @Override
+    public boolean isNode(Object value) {
+        return entityAdapter.isNode(value);
+    }
 
-	@Override
-	public boolean isRelationship(Object value) {
-		return entityAdapter.isRelationship(value);
-	}
+    @Override
+    public boolean isRelationship(Object value) {
+        return entityAdapter.isRelationship(value);
+    }
 }

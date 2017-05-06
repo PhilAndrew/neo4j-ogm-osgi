@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,18 +13,17 @@
 
 package org.neo4j.ogm.context;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.neo4j.ogm.model.RowModel;
 import org.neo4j.ogm.response.Response;
 import org.neo4j.ogm.session.Utils;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 
 public class EntityRowModelMapper implements ResponseMapper<RowModel> {
 
     /**
-     *
      * @param <T> The type of entity to which the row is to be mapped
      */
     @Override

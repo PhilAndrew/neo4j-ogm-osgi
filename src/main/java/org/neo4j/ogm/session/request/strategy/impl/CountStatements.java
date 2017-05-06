@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -50,7 +50,7 @@ public class CountStatements implements AggregateStatements {
             cypherLabels.append(":`").append(label).append('`');
         }
         return new DefaultRowModelRequest(String.format("MATCH (n%s) RETURN COUNT(n)", cypherLabels.toString()),
-                Collections.<String, String> emptyMap());
+                Collections.<String, String>emptyMap());
     }
 
     @Override

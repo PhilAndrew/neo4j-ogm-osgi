@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -16,7 +16,6 @@ package org.neo4j.ogm.typeconversion;
 /**
  * The NumberStringConverter can be used to convert any java object that extends
  * java.lang.Number to and from its String representation.
- *
  * By default, the OGM will automatically convert BigInteger and BigDecimal
  * entity attributes using this converter.
  *

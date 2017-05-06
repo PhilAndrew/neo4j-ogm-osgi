@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -16,10 +16,10 @@ package org.neo4j.ogm.response;
 /**
  * @author Vince Bickers
  */
-public class EmptyResponse implements Response {
+public class EmptyResponse<T> implements Response {
 
     @Override
-    public Object next() {
+    public T next() {
         return null;
     }
 
@@ -31,5 +31,4 @@ public class EmptyResponse implements Response {
     public String[] columns() {
         return new String[0];
     }
-
 }

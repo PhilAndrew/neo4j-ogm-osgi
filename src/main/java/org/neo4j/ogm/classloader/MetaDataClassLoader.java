@@ -20,7 +20,7 @@ import org.neo4j.ogm.Neo4JOSGI;
  *
  * Do not use Class.forName() because it may not work when frameworks
  * such as Play reconfigure the ClassLoader hierarchies. Instead, replace
- * all such calls with MetaDataClassLoader.loadClass()
+ * all such calls with MetaDataClassLoader.loadClassOsgi()
  *
  * The principles behind this class loading technique are due to Vladimir Roubtsov,
  * as documented here: &lt;a href="http://www.javaworld.com/columns/jw-qna-index.shtml"&gt;
@@ -35,7 +35,7 @@ public abstract class MetaDataClassLoader {
 
     private static final ClassLoader classLoader = ClassLoaderResolver.resolve();
 
-    public static Class loadClass(final String name) throws ClassNotFoundException {
+    public static Class loadClassOsgi(final String name) throws ClassNotFoundException {
         return MetaDataClassLoaderOsgi.loadClass(classLoader, name);
     }
 }

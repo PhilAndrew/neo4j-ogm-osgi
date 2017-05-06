@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -26,12 +26,7 @@ public class Filters implements Iterable<Filter> {
 
     private List<Filter> filters = new ArrayList<>();
 
-
     public Filters() {
-    }
-
-    public Filters(String key, Object value) {
-        add(key, value);
     }
 
     public Filters(Filter... filters) {
@@ -42,11 +37,6 @@ public class Filters implements Iterable<Filter> {
         add(filters);
     }
 
-
-    public Filters add(String key, Object value) {
-        this.add(new Filter(key, value));
-        return this;
-    }
 
     public Filters add(Filter... filters) {
         for (Filter filter : filters) {

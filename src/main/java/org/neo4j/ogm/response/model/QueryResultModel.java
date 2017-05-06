@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,18 +13,18 @@
 
 package org.neo4j.ogm.response.model;
 
-import org.neo4j.ogm.model.QueryStatistics;
-import org.neo4j.ogm.model.Result;
-
 import java.util.Iterator;
 import java.util.Map;
+
+import org.neo4j.ogm.model.QueryStatistics;
+import org.neo4j.ogm.model.Result;
 
 /**
  * @author vince
  */
 public class QueryResultModel implements Result {
 
-    private final Iterable<Map<String,Object>> result;
+    private final Iterable<Map<String, Object>> result;
     private final QueryStatistics queryQueryStatistics;
 
     public QueryResultModel(Iterable<Map<String, Object>> result, QueryStatistics queryQueryStatistics) {
@@ -33,12 +33,12 @@ public class QueryResultModel implements Result {
     }
 
     @Override
-    public Iterator<Map<String,Object>> iterator() {
+    public Iterator<Map<String, Object>> iterator() {
         return result.iterator();
     }
 
     @Override
-    public Iterable<Map<String,Object>> queryResults() {
+    public Iterable<Map<String, Object>> queryResults() {
         return result;
     }
 

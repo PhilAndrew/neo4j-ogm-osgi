@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -21,13 +21,10 @@ import java.util.TimeZone;
 /**
  * By default the OGM will map date objects to UTC-based ISO8601 compliant
  * String values when being stored as a node / relationship property
- *
  * Users can override this behaviour for Date objects using
  * the appropriate annotations:
- *
  * {@link org.neo4j.ogm.annotation.typeconversion.DateString#FORMAT} will convert between dates and strings
  * using a user defined date format, e.g. "yy-MM-dd"
- *
  * {@link org.neo4j.ogm.annotation.typeconversion.DateLong} will read and write dates as Long values in the database.
  *
  * @author Vince Bickers
@@ -59,5 +56,4 @@ public class DateStringConverter implements AttributeConverter<Date, String> {
             throw new RuntimeException(e);
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,19 +13,19 @@
 
 package org.neo4j.ogm.response.model;
 
-import org.neo4j.ogm.model.Edge;
-import org.neo4j.ogm.model.GraphModel;
-import org.neo4j.ogm.model.Node;
-
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.neo4j.ogm.model.Edge;
+import org.neo4j.ogm.model.GraphModel;
+import org.neo4j.ogm.model.Node;
+
 /**
  * The results of a query, modelled as graph data.
  *
- *  @author Michal Bachman
+ * @author Michal Bachman
  */
 public class DefaultGraphModel implements GraphModel {
 
@@ -55,24 +55,5 @@ public class DefaultGraphModel implements GraphModel {
             this.relationships.add(relationship);
             relationshipMap.put(relationship.getId(), relationship);
         }
-    }
-
-    public NodeModel node(Long nodeId) {
-        return nodeMap.get(nodeId);
-    }
-
-    /**
-     * Determines whether or not this {@link DefaultGraphModel} contains a {@link NodeModel} that matches the specified ID.
-     *
-     * @param nodeId The graph node ID to match against a {@link NodeModel}
-     * @return <code>true</code> if this {@link DefaultGraphModel} contains a node identified by the given argument, <code>false</code>
-     *         if it doesn't
-     */
-    public boolean containsNodeWithId(Long nodeId) {
-        return nodeMap.containsKey(nodeId);
-    }
-
-    public boolean containsRelationshipWithId(Long relId) {
-        return relationshipMap.containsKey(relId);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -18,8 +18,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.neo4j.ogm.model.Property;
-
 /**
  * @author Vince Bickers
  * @author Luanne Misquitta
@@ -29,34 +27,17 @@ public class Utils {
     public static Map<String, Object> map(final Object... keysAndValues) {
         return new HashMap<String, Object>() {
             {
-                for (int i = 0; i < keysAndValues.length; i+=2 ) {
-                    put(String.valueOf(keysAndValues[i]), keysAndValues[i+1]);
+                for (int i = 0; i < keysAndValues.length; i += 2) {
+                    put(String.valueOf(keysAndValues[i]), keysAndValues[i + 1]);
                 }
-            }
-        };
-    }
-
-    public static Map<String, Object> mapCollection(final String collectionName, final Collection<Property<String, Object>> properties) {
-
-        return new HashMap<String, Object>() {
-            {
-                final Map<String, Object> values = new HashMap<>();
-                for (Property<String, Object> property : properties) {
-                    String key = property.getKey();
-                    Object value = property.asParameter();
-                    if (value != null) {
-                        values.put(key, value);
-                    }
-                }
-                put(collectionName, values);
             }
         };
     }
 
     public static int size(Iterable<?> iterable) {
         return (iterable instanceof Collection)
-                       ? ((Collection<?>) iterable).size()
-                       : size(iterable.iterator());
+                ? ((Collection<?>) iterable).size()
+                : size(iterable.iterator());
     }
 
     public static int size(Iterator<?> iterator) {
@@ -77,8 +58,8 @@ public class Utils {
      * @return converted value
      */
     public static Object coerceTypes(Class clazz, Object value) {
-        if (clazz.isPrimitive() && value==null) {
-            return defaultForPrimitive(clazz,value);
+        if (clazz.isPrimitive() && value == null) {
+            return defaultForPrimitive(clazz, null);
         }
         if (value != null) {
             String className = clazz.getName();
@@ -132,7 +113,6 @@ public class Utils {
                     }
                     return longValue.byteValue();
                 }
-
             }
             // cross-cast to double from int or long or up-cast from float
             if ("double".equals(className) || Double.class.equals(clazz)) {
@@ -187,12 +167,10 @@ public class Utils {
                     String stringValue = (String) value;
                     if (stringValue.length() == 1) {
                         return stringValue.charAt(0);
-                    }
-                    else {
+                    } else {
                         try {
                             return (char) Integer.parseInt(stringValue);
-                        }
-                        catch (NumberFormatException nfe) {
+                        } catch (NumberFormatException nfe) {
                             throw new IllegalArgumentException(stringValue + " cannot be cast to char");
                         }
                     }

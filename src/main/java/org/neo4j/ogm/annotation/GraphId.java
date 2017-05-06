@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -18,21 +18,15 @@ import java.lang.annotation.*;
 /**
  * Identifies the field in the domain entity which is to be
  * mapped to the id property of its backing node in the graph.
- *
  * This annotation is not needed if the domain entity has a Long
  * field called id.
  *
  * @author Vince Bickers
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target(ElementType.FIELD)
 @Inherited
 public @interface GraphId {
-
-    String CLASS = "org.neo4j.ogm.annotation.GraphId";
-    String NAME = "name";
-
-    String name() default "";
 
 }
 

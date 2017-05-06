@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,13 +13,15 @@
 
 package org.neo4j.ogm.cypher;
 
+import java.util.EnumSet;
+import java.util.Map;
+
+import org.neo4j.ogm.cypher.function.DistanceComparison;
 import org.neo4j.ogm.cypher.function.FilterFunction;
 import org.neo4j.ogm.cypher.function.PropertyComparison;
 import org.neo4j.ogm.exception.MappingException;
 import org.neo4j.ogm.typeconversion.AttributeConverter;
 import org.neo4j.ogm.typeconversion.CompositeAttributeConverter;
-
-import java.util.Map;
 
 /**
  * A parameter along with filter information to be added to a query.
@@ -42,16 +44,9 @@ public class Filter {
     private String propertyName;
 
     /**
-     * @deprecated as of 2.0.4 This is a SDN only concern and has been moved to that project.
-     * The position of the property as specified in a derived finder method
-     */
-    @Deprecated
-    private Integer propertyPosition;
-
-    /**
      * The comparison operator to use in the property filter
      */
-    private ComparisonOperator comparisonOperator = ComparisonOperator.EQUALS;
+    private ComparisonOperator comparisonOperator;
 
     /**
      * The boolean operator used to append this filter to the previous ones.
@@ -112,9 +107,11 @@ public class Filter {
         this.function.setFilter(this);
     }
 
-    //Convenience Constructor
-    public Filter(String propertyName, Object propertyValue) {
-        this(propertyName, ComparisonOperator.EQUALS, propertyValue);
+    public Filter(DistanceComparison distanceComparisonFunction, ComparisonOperator comparisonOperator) {
+        this.index = 0;
+        this.function = distanceComparisonFunction;
+        this.function.setFilter(this);
+        this.comparisonOperator = comparisonOperator;
     }
 
     //Convenience Constructor
@@ -124,9 +121,14 @@ public class Filter {
         this.propertyName = propertyName;
     }
 
-    //Convenience Constructor
-    public Filter() {
-        this(new PropertyComparison());
+    // TODO: Split Operators up into binary and unary.
+    public Filter(String propertyName, ComparisonOperator comparisonOperator) {
+        this(new PropertyComparison(null));
+        this.propertyName = propertyName;
+        if (!EnumSet.of(ComparisonOperator.EXISTS, ComparisonOperator.IS_TRUE, ComparisonOperator.IS_NULL).contains(comparisonOperator)) {
+            throw new RuntimeException("This constructor can only be used with Unary comparison operators");
+        }
+        this.comparisonOperator = comparisonOperator;
     }
 
     public String getRelationshipDirection() {
@@ -141,48 +143,13 @@ public class Filter {
         return propertyName;
     }
 
+    @Deprecated
     public void setPropertyName(String propertyName) {
         this.propertyName = propertyName;
     }
 
-    /**
-     * @deprecated use {@link FilterFunction#getValue()} instead.
-     */
-    @Deprecated
-    public Object getPropertyValue() {
-        return this.function.getValue();
-    }
-
-    /**
-     * @deprecated use {@link FilterFunction#setValue(Object)} ()} instead.
-     */
-    @Deprecated
-    public void setPropertyValue(Object propertyValue) {
-        this.function.setValue(propertyValue);
-    }
-
-    /**
-     * @deprecated as of 2.0.4. This is a SDN only concern and has been moved to that project.
-     */
-    @Deprecated
-    public Integer getPropertyPosition() {
-        return propertyPosition;
-    }
-
-    /**
-     * @deprecated as of 2.0.4. This is a SDN only concern and has been moved to that project.
-     */
-    @Deprecated
-    public void setPropertyPosition(Integer propertyPosition) {
-        this.propertyPosition = propertyPosition;
-    }
-
     public ComparisonOperator getComparisonOperator() {
         return comparisonOperator;
-    }
-
-    public void setComparisonOperator(ComparisonOperator comparisonOperator) {
-        this.comparisonOperator = comparisonOperator;
     }
 
     public BooleanOperator getBooleanOperator() {
@@ -207,7 +174,6 @@ public class Filter {
     public void setNegated(boolean negated) {
         this.negated = negated;
     }
-
 
     public Class<?> getOwnerEntityType() {
         return ownerEntityType;
@@ -320,8 +286,9 @@ public class Filter {
     }
 
     /**
-     * @param nodeIdentifier
-     * @param addWhereClause
+     * @param nodeIdentifier The node identifier
+     * @param addWhereClause The add where clause.
+     *
      * @return The filter state as a CYPHER fragment.
      */
     public String toCypher(String nodeIdentifier, boolean addWhereClause) {
@@ -348,5 +315,9 @@ public class Filter {
 
     private String negate(String expression) {
         return String.format("NOT(%s) ", expression);
+    }
+
+    public static void setNameFromProperty(Filter filter, String propertyName) {
+        filter.propertyName = propertyName;
     }
 }

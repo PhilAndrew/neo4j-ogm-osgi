@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -17,26 +17,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.neo4j.ogm.model.GraphRowListModel;
-import org.neo4j.ogm.model.GraphRowModel;
 import org.neo4j.ogm.model.Query;
 import org.neo4j.ogm.response.model.DefaultGraphRowListModel;
 import org.neo4j.ogm.response.model.DefaultGraphRowModel;
 
 /**
- *  The results of a query, modelled as a collection of GraphRow objects (both both graph and row data).
+ * The results of a query, modelled as a collection of GraphRow objects (both both graph and row data).
  *
  * @author Luanne Misquitta
  */
 public class ResultGraphRowListModel implements Query<GraphRowListModel> {
 
-    private List<DefaultGraphRowModel> data = new ArrayList<>();
-
-
-    private final DefaultGraphRowListModel model;
-
-    public ResultGraphRowListModel() {
-        model = new DefaultGraphRowListModel();
-    }
+    private final List<DefaultGraphRowModel> data = new ArrayList<>();
 
     public GraphRowListModel queryResults() {
         DefaultGraphRowListModel graphRowListModel = new DefaultGraphRowListModel();
@@ -44,15 +36,7 @@ public class ResultGraphRowListModel implements Query<GraphRowListModel> {
         return graphRowListModel;
     }
 
-    public void addGraphRowResult(GraphRowModel graphRowModel) {
-        model.add(graphRowModel);
-    }
-
     public List<DefaultGraphRowModel> getData() {
         return data;
-    }
-
-    public void setData(List<DefaultGraphRowModel> data) {
-        this.data = data;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -15,7 +15,6 @@ package org.neo4j.ogm.cypher;
 
 /**
  * {@link PropertyValueTransformer} that does nothing but pass through the property value.
- *
  * This is so that a {@link PropertyValueTransformer} never has to be set to <code>null</code> for a comparison operator if
  * no transformation is required.
  *
@@ -23,9 +22,8 @@ package org.neo4j.ogm.cypher;
  */
 public class NoOpPropertyValueTransformer implements PropertyValueTransformer {
 
-	@Override
-	public Object transformPropertyValue(Object propertyValue) {
-		return propertyValue;
-	}
-
+    @Override
+    public Object transformPropertyValue(Object propertyValue) {
+        return propertyValue;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -27,8 +27,7 @@ public interface ConversionCallback {
      * @param targetType The target type to convert into
      * @param value The value to be converted
      * @return The converted object, which should be an instance of the specified target type or <code>null</code> if the given
-     *         value to convert is <code>null</code>
+     * value to convert is <code>null</code>
      */
     <T> T convert(Class<T> targetType, Object value);
-
 }

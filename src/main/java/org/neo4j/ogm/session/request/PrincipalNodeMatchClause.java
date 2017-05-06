@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -22,22 +22,22 @@ import org.neo4j.ogm.cypher.Filter;
  */
 public class PrincipalNodeMatchClause implements MatchClause {
 
-	private StringBuilder clause;
+    private StringBuilder clause;
 
-	public PrincipalNodeMatchClause(String label) {
+    public PrincipalNodeMatchClause(String label) {
 
-		clause = new StringBuilder();
-		clause.append(String.format("MATCH (n:`%s`) ", label));
-	}
+        clause = new StringBuilder();
+        clause.append(String.format("MATCH (n:`%s`) ", label));
+    }
 
-	@Override
-	public MatchClause append(Filter filter) {
-		clause.append(filter.toCypher("n", clause.indexOf(" WHERE ") == -1));
-		return this;
-	}
+    @Override
+    public MatchClause append(Filter filter) {
+        clause.append(filter.toCypher("n", clause.indexOf(" WHERE ") == -1));
+        return this;
+    }
 
-	@Override
-	public String toCypher() {
-		return clause.toString();
-	}
+    @Override
+    public String toCypher() {
+        return clause.toString();
+    }
 }

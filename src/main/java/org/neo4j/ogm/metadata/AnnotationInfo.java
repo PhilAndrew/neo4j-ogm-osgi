@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,8 +13,9 @@
 
 package org.neo4j.ogm.metadata;
 
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,33 +24,60 @@ import java.util.Map;
  * @author Mark Angrish
  */
 public class AnnotationInfo {
-    public AnnotationInfo() {
+
+
+    private final Map<String, AnnotationInfo> classAnnotations = new HashMap<>();
+
+    public void addPublic(AnnotationInfo annotationInfo) {
+        this.add(annotationInfo);
+    }
+
+
+    void add(AnnotationInfo annotationInfo) {
+        classAnnotations.put(annotationInfo.getName(), annotationInfo);
+    }
+
+
+
+
+
+    private static String convert(Method element, Object value) {
+
+        final Class<?> returnType = element.getReturnType();
+        if (returnType.isPrimitive()) {
+            return String.valueOf(value);
+        } else if (returnType.equals(Class.class)) {
+            return ((Class) value).getName();
+        } else {
+            final String result = value.toString();
+            if (result.isEmpty()) {
+                if (element.getDefaultValue().toString().isEmpty()) {
+                    return null;
+                }
+                return element.getDefaultValue().toString();
+            }
+            return result;
+        }
     }
 
     private String annotationName;
-    private final Map<String, String> elements = new HashMap<>();
 
-    public AnnotationInfo(final DataInputStream dataInputStream, ConstantPool constantPool) throws IOException {
+    private Map<String, String> elements;
 
-        String annotationFieldDescriptor = constantPool.readString(dataInputStream.readUnsignedShort());
-        String annotationClassName;
-        if (annotationFieldDescriptor.charAt(0) == 'L'
-                && annotationFieldDescriptor.charAt(annotationFieldDescriptor.length() - 1) == ';') {
-            annotationClassName = annotationFieldDescriptor.substring(1,
-                    annotationFieldDescriptor.length() - 1).replace('/', '.');
-        } else {
-            annotationClassName = annotationFieldDescriptor;
-        }
-        setName(annotationClassName);
+    public AnnotationInfo(Annotation annotation) {
 
-        int numElementValuePairs = dataInputStream.readUnsignedShort();
+        this.annotationName = annotation.annotationType().getName();
+        this.elements = new HashMap<>();
 
-        for (int i = 0; i < numElementValuePairs; i++) {
-            String elementName = constantPool.readString(dataInputStream.readUnsignedShort());
-            Object value = readAnnotationElementValue(dataInputStream, constantPool);
-            if (elementName != null && value != null) {
-                put(elementName, value.toString());
+        final Method[] declaredElements = annotation.annotationType().getDeclaredMethods();
+        for (Method element : declaredElements) {
+            Object value;
+            try {
+                value = element.invoke(annotation);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException("Could not read value of Annotation " + element.getName());
             }
+            elements.put(element.getName(), value != null ? convert(element, value) : element.getDefaultValue().toString());
         }
     }
 
@@ -57,83 +85,12 @@ public class AnnotationInfo {
         return annotationName;
     }
 
-    void setName(String annotationName) {
-        this.annotationName = annotationName;
-    }
-
-    void put(String key, String value) {
-        elements.put(key, value);
-    }
-
     public String get(String key, String defaultValue) {
-        if (elements.get(key) == null) {
-            put(key, defaultValue);
-        }
+        elements.putIfAbsent(key, defaultValue);
         return get(key);
     }
 
-
     public String get(String key) {
         return elements.get(key);
-    }
-
-    public String toString() {
-        StringBuilder sb = new StringBuilder(annotationName);
-        sb.append(": ");
-        for (String key : elements.keySet()) {
-            sb.append(key);
-            sb.append(":'");
-            sb.append(get(key, null));
-            sb.append("'");
-            sb.append(" ");
-        }
-        return sb.toString();
-    }
-
-    private Object readAnnotationElementValue(final DataInputStream dataInputStream, ConstantPool constantPool) throws IOException {
-
-        int tag = dataInputStream.readUnsignedByte();
-
-        switch (tag) {
-            case 'B':
-                return constantPool.readByte(dataInputStream.readUnsignedShort());
-            case 'C':
-                return constantPool.readChar(dataInputStream.readUnsignedShort());
-            case 'D':
-                return constantPool.readDouble(dataInputStream.readUnsignedShort());
-            case 'F':
-                return constantPool.readFloat(dataInputStream.readUnsignedShort());
-            case 'I':
-                return constantPool.readInteger(dataInputStream.readUnsignedShort());
-            case 'J':
-                return constantPool.readLong(dataInputStream.readUnsignedShort());
-            case 'S':
-                return constantPool.readShort(dataInputStream.readUnsignedShort());
-            case 's':
-                return constantPool.readString(dataInputStream.readUnsignedShort());
-            case 'Z':
-                return constantPool.readBoolean(dataInputStream.readUnsignedShort());
-            case 'e':
-                // enum_const_value (NOT HANDLED)
-                dataInputStream.skipBytes(4);
-                return null;
-                //return constantPool.lookup(dataInputStream.);
-            case 'c':
-                // class_info_index
-                return constantPool.readString(dataInputStream.readUnsignedShort());
-            case '@':
-                // Nested annotation
-                return new AnnotationInfo(dataInputStream, constantPool);
-            case '[':
-                // array_value
-                final int count = dataInputStream.readUnsignedShort();
-                Object[] values = new Object[count];
-                for (int l = 0; l < count; ++l) {
-                    values[l] = readAnnotationElementValue(dataInputStream, constantPool);
-                }
-                return values;
-            default:
-                throw new ClassFormatError("Invalid annotation element type tag: 0x" + Integer.toHexString(tag));
-        }
     }
 }

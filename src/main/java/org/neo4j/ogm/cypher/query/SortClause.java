@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -18,33 +18,32 @@ package org.neo4j.ogm.cypher.query;
  */
 public class SortClause {
 
-	private final SortOrder.Direction direction;
-	private final String[] properties;
+    private final SortOrder.Direction direction;
+    private final String[] properties;
 
-	public SortClause(SortOrder.Direction direction, String... properties) {
-		this.direction = direction;
-		this.properties = properties;
-	}
+    public SortClause(SortOrder.Direction direction, String... properties) {
+        this.direction = direction;
+        this.properties = properties;
+    }
 
-	public String[] getProperties() {
-		return properties;
-	}
+    public String[] getProperties() {
+        return properties;
+    }
 
-	public String toString() {
+    public String toString() {
 
-		StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
-		if (properties.length > 0) {
-			for (String n : properties) {
-				sb.append("$.").append(n);
-				if (direction == SortOrder.Direction.DESC) {
-					sb.append(" DESC");
-				}
-				sb.append(",");
-			}
-			sb.deleteCharAt(sb.length() - 1);
-		}
-		return sb.toString();
-	}
-
+        if (properties.length > 0) {
+            for (String n : properties) {
+                sb.append("$.").append(n);
+                if (direction == SortOrder.Direction.DESC) {
+                    sb.append(" DESC");
+                }
+                sb.append(",");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        return sb.toString();
+    }
 }

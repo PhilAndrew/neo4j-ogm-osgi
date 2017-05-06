@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,15 +13,15 @@
 
 package org.neo4j.ogm.response.model;
 
-import org.neo4j.ogm.model.Edge;
-import org.neo4j.ogm.model.Property;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.neo4j.ogm.model.Edge;
+import org.neo4j.ogm.model.Property;
+
 /**
- *  @author Michal Bachman
+ * @author Michal Bachman
  */
 public class RelationshipModel implements Edge {
 
@@ -82,10 +82,6 @@ public class RelationshipModel implements Edge {
         }
     }
 
-    public void setPropertyList(List<Property<String, Object>> properties) {
-        this.properties = properties;
-    }
-
 
     @Override
     public String toString() {
@@ -100,7 +96,6 @@ public class RelationshipModel implements Edge {
         RelationshipModel that = (RelationshipModel) o;
 
         return id.equals(that.id);
-
     }
 
     @Override

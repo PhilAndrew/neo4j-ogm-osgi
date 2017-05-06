@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class CaseInsensitiveLikePropertyValueTransformer implements PropertyValueTransformer {
 
     // NB: wildcard character * is absent
-    private static final Pattern CHARS_TO_ESCAPE = Pattern.compile("([{}\\(\\)\\[\\]^$?.+\\\\|!])");
+    private static final Pattern CHARS_TO_ESCAPE = Pattern.compile("([{}()\\[\\]^$?.+\\\\|!])");
 
     @Override
     public Object transformPropertyValue(Object propertyValue) {
@@ -36,5 +36,4 @@ public class CaseInsensitiveLikePropertyValueTransformer implements PropertyValu
     private static String escapeRegexCharacters(String propertyValue) {
         return CHARS_TO_ESCAPE.matcher(propertyValue).replaceAll("\\\\$1");
     }
-
 }

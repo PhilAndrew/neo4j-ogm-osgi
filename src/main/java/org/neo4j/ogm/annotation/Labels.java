@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -22,16 +22,14 @@ import java.lang.annotation.Target;
  * Annotation to declare that the mapped entity will control which labels are added to a node. On save the node's
  * labels will equal the contents of the collection property that this label is applied to, plus the class name or
  * or @NodeEntity label property, if applicable.
- * <p>
  * If this annotation does not exist or refers to a null property on the mapped entity, then the node's labels
  * will not be managed, that is, left as is.
  *
  * @author Jasper Blues
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.TYPE})
+@Target(ElementType.FIELD)
 public @interface Labels {
 
-    String CLASS = "org.neo4j.ogm.annotation.Labels";
     String[] defaultValue() default {};
 }

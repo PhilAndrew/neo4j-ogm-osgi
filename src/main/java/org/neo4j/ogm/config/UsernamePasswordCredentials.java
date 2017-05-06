@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -25,6 +25,9 @@ public class UsernamePasswordCredentials implements Credentials<String> {
     private final String password;
 
     public UsernamePasswordCredentials(String userName, String password) {
+        if (userName == null || password == null) {
+            throw new IllegalArgumentException("username or password cannot be null");
+        }
         this.credentials = Base64.encodeBase64String(userName.concat(":").concat(password).getBytes());
         this.username = userName;
         this.password = password;

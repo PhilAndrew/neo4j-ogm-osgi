@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -16,7 +16,6 @@ package org.neo4j.ogm.typeconversion;
 /**
  * By default the OGM will map enum objects to and from
  * the string value returned by enum.name()
- *
  * enum.name() is preferred to enum.ordinal() because it
  * is (slightly) safer: a persisted enum have to be renamed
  * to break its database mapping, whereas if its ordinal
@@ -44,5 +43,4 @@ public class EnumStringConverter implements AttributeConverter<Enum, String> {
         if (value == null) return null;
         return Enum.valueOf(enumClass, value);
     }
-
 }

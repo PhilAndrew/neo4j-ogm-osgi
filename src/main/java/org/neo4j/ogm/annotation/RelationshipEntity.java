@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -20,9 +20,7 @@ import java.lang.annotation.Target;
 
 /**
  * Identifies a domain entity as being backed by a relationship in the graph.
- *
  * This annotation is always needed for relationship-backed entities.
- *
  * The type attribute supplies the relationship type in the graph.
  *
  * @author Michal Bachman
@@ -31,7 +29,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface RelationshipEntity {
 
-    String CLASS = "org.neo4j.ogm.annotation.RelationshipEntity";
     String TYPE = "type";
 
     String type();

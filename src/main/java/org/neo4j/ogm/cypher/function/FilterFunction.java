@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,9 +13,9 @@
 
 package org.neo4j.ogm.cypher.function;
 
-import org.neo4j.ogm.cypher.Filter;
-
 import java.util.Map;
+
+import org.neo4j.ogm.cypher.Filter;
 
 /**
  * @author Jasper Blues
@@ -28,10 +28,7 @@ public interface FilterFunction<T> {
 
     T getValue();
 
-    void setValue(T value);
-
     String expression(String nodeIdentifier);
 
     Map<String, Object> parameters();
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -19,6 +19,7 @@ package org.neo4j.ogm.context;
  * The relationshipId is recorded for relationship entities, and not for simple relationships.
  * The relationship direction is always OUTGOING from the startNodeId to the endNodeId.
  * The startNodeType and endNodeType represent the class type of the entities on either end of the relationship, and may be a relationship entity class.
+ *
  * @author Adam George
  * @author Luanne Misquitta
  */
@@ -30,8 +31,6 @@ public class MappedRelationship implements Mappable {
     private Long relationshipId;
     private Class startNodeType;
     private Class endNodeType;
-
-    private boolean active = true;
 
     public MappedRelationship(long startNodeId, String relationshipType, long endNodeId, Class startNodeType, Class endNodeType) {
         this.startNodeId = startNodeId;
@@ -76,22 +75,6 @@ public class MappedRelationship implements Mappable {
      * delete it when the transaction commits.
      */
     public void activate() {
-        active = true;
-    }
-
-    /**
-     * Deactivating a relationship marks it for
-     * deletion, meaning that, unless it is
-     * subsequently reactivated, it will be
-     * removed from the database when the
-     * transaction commits.
-     */
-    public void deactivate() {
-        active = false;
-    }
-
-    public boolean isActive() {
-        return active;
     }
 
     public Class getEndNodeType() {
@@ -109,10 +92,10 @@ public class MappedRelationship implements Mappable {
 
         MappedRelationship that = (MappedRelationship) o;
 
-        if (startNodeId != that.startNodeId) return false;
-        if (endNodeId != that.endNodeId) return false;
-        if (!relationshipType.equals(that.relationshipType)) return false;
-        return !(relationshipId != null ? !relationshipId.equals(that.relationshipId) : that.relationshipId != null);
+        return startNodeId == that.startNodeId
+                && endNodeId == that.endNodeId
+                && relationshipType.equals(that.relationshipType)
+                && !(relationshipId != null ? !relationshipId.equals(that.relationshipId) : that.relationshipId != null);
     }
 
     @Override
@@ -126,4 +109,5 @@ public class MappedRelationship implements Mappable {
 
     public String toString() {
         return String.format("(%s)-[%s:%s]->(%s)", startNodeId, relationshipId, relationshipType, endNodeId);
-    }}
+    }
+}

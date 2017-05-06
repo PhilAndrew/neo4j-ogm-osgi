@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,10 +13,10 @@
 
 package org.neo4j.ogm.context;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import java.util.Collection;
 import java.util.HashSet;
+
+import org.apache.commons.collections4.CollectionUtils;
 
 /**
  * Tracks changes of labels to allow removing unused labels from the database node, when they're removed from an

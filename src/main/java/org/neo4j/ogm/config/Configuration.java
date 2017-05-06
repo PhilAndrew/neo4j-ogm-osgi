@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,11 +13,10 @@
 
 package org.neo4j.ogm.config;
 
-import java.io.InputStream;
 import java.net.URI;
-import java.util.*;
+import java.net.URISyntaxException;
+import java.util.Map;
 
-import org.neo4j.ogm.classloader.ClassLoaderResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,286 +24,301 @@ import org.slf4j.LoggerFactory;
  * A generic configuration class that can be set up programmatically
  * or via a properties file.
  *
- * @author vince
+ * @author Vince Bickers
+ * @author Mark Angrish
  */
-public class Configuration implements AutoCloseable {
+public class Configuration {
 
-    private final Logger logger = LoggerFactory.getLogger(Configuration.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
-    public static final String[] DRIVER = {"neo4j.ogm.driver", "spring.data.neo4j.driver", "driver"};
-    public static final String[] CREDENTIALS = {"neo4j.ogm.credentials", "spring.data.neo4j.credentials", "credentials"};
-    public static final String[] URI = {"neo4j.ogm.URI", "spring.data.neo4j.URI", "URI"};
-    public static final String[] USERNAME = {"neo4j.ogm.username", "spring.data.neo4j.username", "username"};
-    public static final String[] PASSWORD = {"neo4j.ogm.password", "spring.data.neo4j.password", "password"};
-    public static final String[] CONNECTION_POOL_SIZE = {"connection.pool.size"};
-    public static final String[] ENCRYPTION_LEVEL = {"encryption.level"};
-    public static final String[] TRUST_STRATEGY = {"trust.strategy"};
-    public static final String[] TRUST_CERT_FILE = {"trust.certificate.file"};
-    public static final String[] AUTO_INDEX = {"neo4j.ogm.indexes.auto", "indexes.auto"};
-    public static final String[] GENERATED_INDEXES_OUTPUT_DIR = {"neo4j.ogm.indexes.auto.dump.dir", "indexes.auto.dump.dir"};
-    public static final String[] GENERATED_INDEXES_OUTPUT_FILENAME = {"neo4j.ogm.indexes.auto.dump.filename", "indexes.auto.dump.filename"};
-    public static final String[] NEO4J_HA_PROPERTIES_FILE = {"neo4j.ha.properties.file"};
+	private String uri;
+	private int connectionPoolSize;
+	private String encryptionLevel;
+	private String trustStrategy;
+	private String trustCertFile;
+	private AutoIndexMode autoIndex;
+	private String generatedIndexesOutputDir;
+	private String generatedIndexesOutputFilename;
+	private String neo4jHaPropertiesFile;
+	private String driverName;
+	private Credentials credentials;
 
-    // defaults
-    private static final int CONNECTION_POOL_SIZE_DEFAULT = 50;
-    private static final AutoIndexMode DEFAULT_AUTO_INDEX_VALUE = AutoIndexMode.NONE;
-    private static final String DEFAULT_GENERATED_INDEXES_FILENAME = "generated_indexes.cql";
-    private static final String DEFAULT_GENERATED_INDEXES_DIR = ".";
+	Configuration(Builder builder) {
+		this.uri = builder.uri;
+		this.connectionPoolSize = builder.connectionPoolSize != null ? builder.connectionPoolSize : 50;
+		this.encryptionLevel = builder.encryptionLevel;
+		this.trustStrategy = builder.trustStrategy;
+		this.trustCertFile = builder.trustCertFile;
+		this.autoIndex = builder.autoIndex != null ? AutoIndexMode.fromString(builder.autoIndex) : AutoIndexMode.NONE;
+		this.generatedIndexesOutputDir = builder.generatedIndexesOutputDir != null ? builder.generatedIndexesOutputDir : ".";
+		this.generatedIndexesOutputFilename = builder.generatedIndexesOutputFilename != null ? builder.generatedIndexesOutputFilename : "generated_indexes.cql";
+		this.neo4jHaPropertiesFile = builder.neo4jHaPropertiesFile;
 
-    private final Map<String, Object> config = new HashMap<>();
+		if (this.uri != null) {
+			java.net.URI uri = null;
+			try {
+				uri = new URI(this.uri);
+			} catch (URISyntaxException e) {
+				throw new RuntimeException("Could not configure supplied URI in Configuration");
+			}
+			String userInfo = uri.getUserInfo();
+			if (userInfo != null) {
+				String[] userPass = userInfo.split(":");
+				credentials = new UsernamePasswordCredentials(userPass[0], userPass[1]);
+				this.uri = uri.toString().replace(uri.getUserInfo() + "@", "");
+			}
+			if (getDriverClassName() == null) {
+				determineDefaultDriverName(uri.getScheme());
+			}
+		} else {
+			determineDefaultDriverName("file");
+		}
+		assert this.driverName != null;
 
+		if (builder.username != null && builder.password != null) {
+			if (this.credentials != null) {
+				LOGGER.warn("Overriding credentials supplied in URI with supplied username and password.");
+			}
+			credentials = new UsernamePasswordCredentials(builder.username, builder.password);
+		}
+	}
 
-    public Configuration() {
-    }
+	public AutoIndexMode getAutoIndex() {
+		return autoIndex;
+	}
 
-    public Configuration(String propertiesFilename) {
-        configure(propertiesFilename);
-    }
+	public String getDumpDir() {
+		return generatedIndexesOutputDir;
+	}
 
-    public void set(String key, Object value) {
-        config.put(key, value);
-    }
+	public String getDumpFilename() {
+		return generatedIndexesOutputFilename;
+	}
 
-    public Object get(String key) {
-        return config.get(key);
-    }
+	public String getURI() {
+		return uri;
+	}
 
-    public Object get(String... keys) {
-        for (String key : keys) {
-            Object obj = config.get(key);
-            if (obj != null) {
-                return obj;
-            }
-        }
-        return null;
-    }
+	public String getDriverClassName() {
+		return driverName;
+	}
 
-    private void configure(String propertiesFileName) {
+	public int getConnectionPoolSize() {
+		return connectionPoolSize;
+	}
 
-        try (InputStream is = ClassLoaderResolver.resolve().getResourceAsStream(propertiesFileName)) {
+	public String getEncryptionLevel() {
+		return encryptionLevel;
+	}
 
-            Properties properties = new Properties();
-            properties.load(is);
-            Enumeration propertyNames = properties.propertyNames();
+	public String getTrustStrategy() {
+		return trustStrategy;
+	}
 
-            while (propertyNames.hasMoreElements()) {
-                String propertyName = (String) propertyNames.nextElement();
-                config.put(propertyName, properties.getProperty(propertyName));
-            }
-        } catch (Exception e) {
-            logger.warn("Could not load {}", propertiesFileName);
-        }
-    }
+	public String getTrustCertFile() {
+		return trustCertFile;
+	}
 
-    @Override
-    public String toString() {
+	public String getNeo4jHaPropertiesFile() {
+		return neo4jHaPropertiesFile;
+	}
 
-        StringBuilder sb = new StringBuilder();
+	public Credentials getCredentials() {
+		return credentials;
+	}
 
-        sb.append(" {\n");
-        for (Map.Entry entry : config.entrySet()) {
-            sb.append("\t");
-            sb.append(entry.getKey());
-            sb.append("='");
-            sb.append(entry.getValue());
-            sb.append("'");
-            sb.append("\n");
-        }
-        sb.append("}");
-        return sb.toString();
-    }
+	private void determineDefaultDriverName(String scheme) {
 
-    public void clear() {
-        config.clear();
-    }
+		if (scheme == null) {
+			throw new RuntimeException("A URI Scheme must be one of http/https, bolt or file.");
+		}
 
-    public void close() {
-        Components.destroy();
-    }
+		switch (scheme) {
+			case "http":
+			case "https":
+				this.driverName = "org.neo4j.ogm.drivers.http.driver.HttpDriver";
+				break;
+			case "bolt":
+				this.driverName = "org.neo4j.ogm.drivers.bolt.driver.BoltDriver";
+				break;
+			default:
+				this.driverName = "org.neo4j.ogm.drivers.embedded.driver.EmbeddedDriver";
+				break;
+		}
+	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
-    // AUTO INDEX CONFIG
-    // =================
+		Configuration that = (Configuration) o;
 
-    public Configuration setAutoIndex(String value) {
+		if (connectionPoolSize != that.connectionPoolSize) return false;
+		if (!uri.equals(that.uri)) return false;
+		if (encryptionLevel != null ? !encryptionLevel.equals(that.encryptionLevel) : that.encryptionLevel != null)
+			return false;
+		if (trustStrategy != null ? !trustStrategy.equals(that.trustStrategy) : that.trustStrategy != null)
+			return false;
+		if (trustCertFile != null ? !trustCertFile.equals(that.trustCertFile) : that.trustCertFile != null)
+			return false;
+		if (autoIndex != that.autoIndex) return false;
+		if (generatedIndexesOutputDir != null ? !generatedIndexesOutputDir.equals(that.generatedIndexesOutputDir) : that.generatedIndexesOutputDir != null)
+			return false;
+		if (generatedIndexesOutputFilename != null ? !generatedIndexesOutputFilename.equals(that.generatedIndexesOutputFilename) : that.generatedIndexesOutputFilename != null)
+			return false;
+		if (neo4jHaPropertiesFile != null ? !neo4jHaPropertiesFile.equals(that.neo4jHaPropertiesFile) : that.neo4jHaPropertiesFile != null)
+			return false;
+		if (!driverName.equals(that.driverName)) return false;
+		return credentials != null ? credentials.equals(that.credentials) : that.credentials == null;
+	}
 
-        if (AutoIndexMode.fromString(value) == null) {
-            throw new RuntimeException("Invalid index value: " + value + ". Value must be one of: " + Arrays.toString(AutoIndexMode.values()));
-        }
+	@Override
+	public int hashCode() {
+		int result = uri.hashCode();
+		result = 31 * result + connectionPoolSize;
+		result = 31 * result + (encryptionLevel != null ? encryptionLevel.hashCode() : 0);
+		result = 31 * result + (trustStrategy != null ? trustStrategy.hashCode() : 0);
+		result = 31 * result + (trustCertFile != null ? trustCertFile.hashCode() : 0);
+		result = 31 * result + (autoIndex != null ? autoIndex.hashCode() : 0);
+		result = 31 * result + (generatedIndexesOutputDir != null ? generatedIndexesOutputDir.hashCode() : 0);
+		result = 31 * result + (generatedIndexesOutputFilename != null ? generatedIndexesOutputFilename.hashCode() : 0);
+		result = 31 * result + (neo4jHaPropertiesFile != null ? neo4jHaPropertiesFile.hashCode() : 0);
+		result = 31 * result + driverName.hashCode();
+		result = 31 * result + (credentials != null ? credentials.hashCode() : 0);
+		return result;
+	}
 
-        set(AUTO_INDEX[0], value);
-        return this;
-    }
+	public static class Builder {
 
-    public AutoIndexMode getAutoIndex() {
-        if (get(AUTO_INDEX) == null) {
-            return DEFAULT_AUTO_INDEX_VALUE;
-        }
-        return AutoIndexMode.fromString((String) get(AUTO_INDEX));
-    }
+		public static Builder copy(Builder builder) {
+			return new Builder()
+					.uri(builder.uri)
+					.connectionPoolSize(builder.connectionPoolSize)
+					.encryptionLevel(builder.encryptionLevel)
+					.trustStrategy(builder.trustStrategy)
+					.trustCertFile(builder.trustCertFile)
+					.autoIndex(builder.autoIndex)
+					.generatedIndexesOutputDir(builder.generatedIndexesOutputDir)
+					.generatedIndexesOutputFilename(builder.generatedIndexesOutputFilename)
+					.neo4jHaPropertiesFile(builder.neo4jHaPropertiesFile)
+					.credentials(builder.username, builder.password);
+		}
 
+		private static final String URI = "URI";
+		private static final String CONNECTION_POOL_SIZE = "connection.pool.size";
+		private static final String ENCRYPTION_LEVEL = "encryption.level";
+		private static final String TRUST_STRATEGY = "trust.strategy";
+		private static final String TRUST_CERT_FILE = "trust.certificate.file";
+		private static final String AUTO_INDEX = "indexes.auto";
+		private static final String GENERATED_INDEXES_OUTPUT_DIR = "indexes.auto.dump.dir";
+		private static final String GENERATED_INDEXES_OUTPUT_FILENAME = "indexes.auto.dump.filename";
+		private static final String NEO4J_HA_PROPERTIES_FILE = "neo4j.ha.properties.file";
 
-    public Configuration setDumpDir(String dumpDir) {
-        set(GENERATED_INDEXES_OUTPUT_DIR[0], dumpDir);
-        return this;
-    }
+		private String uri;
+		private Integer connectionPoolSize;
+		private String encryptionLevel;
+		private String trustStrategy;
+		private String trustCertFile;
+		private String autoIndex;
+		private String generatedIndexesOutputDir;
+		private String generatedIndexesOutputFilename;
+		private String neo4jHaPropertiesFile;
+		private String username;
+		private String password;
 
-    public String getDumpDir() {
-        if (get(GENERATED_INDEXES_OUTPUT_DIR) == null) {
-            return DEFAULT_GENERATED_INDEXES_DIR;
-        }
-        return (String) get(GENERATED_INDEXES_OUTPUT_DIR);
-    }
+		public Builder() {
+		}
 
-    public Configuration setDumpFilename(String dumpFilename) {
-        set(GENERATED_INDEXES_OUTPUT_FILENAME[0], dumpFilename);
-        return this;
-    }
+		public Builder(ConfigurationSource configurationSource) {
+			for (Map.Entry<Object, Object> entry : configurationSource.properties().entrySet()) {
+				switch (entry.getKey().toString()) {
+					case URI:
+						this.uri = (String) entry.getValue();
+						break;
+					case CONNECTION_POOL_SIZE:
+						this.connectionPoolSize = Integer.parseInt((String) entry.getValue());
+						break;
+					case ENCRYPTION_LEVEL:
+						this.encryptionLevel = (String) entry.getValue();
+						break;
+					case TRUST_STRATEGY:
+						this.trustStrategy = (String) entry.getValue();
+						break;
+					case TRUST_CERT_FILE:
+						this.trustCertFile = (String) entry.getValue();
+						break;
+					case AUTO_INDEX:
+						this.autoIndex = (String) entry.getValue();
+						break;
+					case GENERATED_INDEXES_OUTPUT_DIR:
+						this.generatedIndexesOutputDir = (String) entry.getValue();
+						break;
+					case GENERATED_INDEXES_OUTPUT_FILENAME:
+						this.generatedIndexesOutputFilename = (String) entry.getValue();
+						break;
+					case NEO4J_HA_PROPERTIES_FILE:
+						this.neo4jHaPropertiesFile = (String) entry.getValue();
+						break;
+					default:
+						LOGGER.warn("Could not process property with key: {}", entry.getKey());
+				}
+			}
+		}
 
-    public String getDumpFilename() {
-        if (get(GENERATED_INDEXES_OUTPUT_FILENAME) == null) {
-            return DEFAULT_GENERATED_INDEXES_FILENAME;
-        }
-        return (String) get(GENERATED_INDEXES_OUTPUT_FILENAME);
-    }
+		public Builder uri(String uri) {
+			this.uri = uri;
+			return this;
+		}
 
-    // DRIVER CONFIG
-    // =============
+		public Builder connectionPoolSize(Integer connectionPoolSize) {
+			this.connectionPoolSize = connectionPoolSize;
+			return this;
+		}
 
+		public Builder encryptionLevel(String encryptionLevel) {
+			this.encryptionLevel = encryptionLevel;
+			return this;
+		}
 
-    public Configuration setDriverClassName(String driverClassName) {
-        set(DRIVER[0], driverClassName);
-        return this;
-    }
+		public Builder trustStrategy(String trustStrategy) {
+			this.trustStrategy = trustStrategy;
+			return this;
+		}
 
-    public Configuration setURI(String uri) {
-        set(URI[0], uri);
-        try { // if this URI is a genuine resource, see if it has an embedded user-info and set credentials accordingly
-            java.net.URI url = new URI(uri);
-            String userInfo = url.getUserInfo();
-            if (userInfo != null) {
-                String[] userPass = userInfo.split(":");
-                setCredentials(userPass[0], userPass[1]);
-            }
-            if (getDriverClassName() == null) {
-                determineDefaultDriverName(url);
-            }
-        } catch (Exception e) {
-            // do nothing here. user not obliged to supply a URL, or to pass in credentials
-        }
-        return this;
-    }
+		public Builder trustCertFile(String trustCertFile) {
+			this.trustCertFile = trustCertFile;
+			return this;
+		}
 
-    public Configuration setCredentials(Credentials credentials) {
-        set(CREDENTIALS[0], credentials);
-        return this;
-    }
+		public Builder autoIndex(String autoIndex) {
+			this.autoIndex = autoIndex;
+			return this;
+		}
 
-    public Configuration setCredentials(String username, String password) {
-        set(CREDENTIALS[0], new UsernamePasswordCredentials(username, password));
-        return this;
-    }
+		public Builder generatedIndexesOutputDir(String generatedIndexesOutputDir) {
+			this.generatedIndexesOutputDir = generatedIndexesOutputDir;
+			return this;
+		}
 
-    public Configuration setConnectionPoolSize(Integer sessionPoolSize) {
-        set(CONNECTION_POOL_SIZE[0], sessionPoolSize.toString());
-        return this;
-    }
+		public Builder generatedIndexesOutputFilename(String generatedIndexesOutputFilename) {
+			this.generatedIndexesOutputFilename = generatedIndexesOutputFilename;
+			return this;
+		}
 
-    public Configuration setEncryptionLevel(String encryptionLevel) {
-        set(ENCRYPTION_LEVEL[0], encryptionLevel);
-        return this;
-    }
+		public Builder neo4jHaPropertiesFile(String neo4jHaPropertiesFile) {
+			this.neo4jHaPropertiesFile = neo4jHaPropertiesFile;
+			return this;
+		}
 
-    public Configuration setTrustStrategy(String trustStrategy) {
-        set(TRUST_STRATEGY[0], trustStrategy);
-        return this;
-    }
+		public Configuration build() {
+			return new Configuration(this);
+		}
 
-    public Configuration setTrustCertFile(String trustCertFile) {
-        set(TRUST_CERT_FILE[0], trustCertFile);
-        return this;
-    }
-
-    /**
-     * Returns the driver connection credentials, if they have been provided.
-     * If a Credentials object exists, it will be returned
-     * If a Credentials object does not exist, it will be created from the URI's authentication part
-     * If the URI does not contain an authentication part, Credentials will be created from username/password properties
-     * if they have been set.
-     *
-     * @return a Credentials object if one exists or can be created, null otherwise
-     */
-    public Credentials getCredentials() {
-
-        if (get(CREDENTIALS) == null) {
-            setURI((String) get(URI)); // set from the URI?
-        }
-
-        if (get(CREDENTIALS) == null) {
-            String username = (String) get(USERNAME);
-            String password = (String) get(PASSWORD);
-            if (username != null && password != null) {
-                setCredentials(username, password); // set from username/password pair
-            }
-        }
-        return (Credentials) get(CREDENTIALS);
-    }
-
-    public String getURI() {
-        return (String)  get(URI);
-    }
-
-    public String getDriverClassName() {
-        return (String) get(DRIVER);
-    }
-
-    public Integer getConnectionPoolSize() {
-        if (get(CONNECTION_POOL_SIZE) != null) {
-            return Integer.valueOf((String)get(CONNECTION_POOL_SIZE));
-        }
-        return CONNECTION_POOL_SIZE_DEFAULT;
-    }
-
-    public String getEncryptionLevel() {
-        if (get(ENCRYPTION_LEVEL) != null) {
-            return (String)get(ENCRYPTION_LEVEL);
-        }
-        return null;
-    }
-
-    public String getTrustStrategy() {
-        if (get(TRUST_STRATEGY) != null) {
-            return (String)get(TRUST_STRATEGY);
-        }
-        return null;
-    }
-
-    public String getTrustCertFile() {
-        if (get(TRUST_CERT_FILE) != null) {
-            return (String)get(TRUST_CERT_FILE);
-        }
-        return null;
-    }
-
-    public String getNeo4jHaPropertiesFile() {
-        if (get(NEO4J_HA_PROPERTIES_FILE) != null) {
-            return (String) get(NEO4J_HA_PROPERTIES_FILE);
-        }
-        return null;
-    }
-
-    private void determineDefaultDriverName(URI uri) {
-        switch (uri.getScheme()) {
-            case "http":
-            case "https":
-                setDriverClassName("org.neo4j.ogm.drivers.http.driver.HttpDriver");
-                break;
-            case "bolt":
-                setDriverClassName("org.neo4j.ogm.drivers.bolt.driver.BoltDriver");
-                break;
-            default:
-                setDriverClassName("org.neo4j.ogm.drivers.embedded.driver.EmbeddedDriver");
-                break;
-        }
-    }
+		public Builder credentials(String username, String password) {
+			this.username = username;
+			this.password = password;
+			return this;
+		}
+	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -20,14 +20,14 @@ import org.neo4j.ogm.model.Query;
  */
 public class ResultRestModel implements Query<Object[]> {
 
-	private Object[] rest;
+    private Object[] rest;
 
-	public void setRest(Object[] restModel) {
-		this.rest = restModel;
-	}
+    public void setRest(Object[] restModel) {
+        this.rest = restModel;
+    }
 
-	@Override
-	public Object[] queryResults() {
-		return rest;
-	}
+    @Override
+    public Object[] queryResults() {
+        return rest;
+    }
 }

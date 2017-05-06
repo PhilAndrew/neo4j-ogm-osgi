@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -19,7 +19,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.neo4j.ogm.MetaData;
 import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.Property;
 import org.neo4j.ogm.annotation.Relationship;
@@ -34,6 +33,7 @@ import org.neo4j.ogm.driver.Driver;
 import org.neo4j.ogm.metadata.AnnotationInfo;
 import org.neo4j.ogm.metadata.ClassInfo;
 import org.neo4j.ogm.metadata.FieldInfo;
+import org.neo4j.ogm.metadata.MetaData;
 import org.neo4j.ogm.model.Result;
 import org.neo4j.ogm.request.Request;
 import org.neo4j.ogm.session.delegates.*;
@@ -498,16 +498,16 @@ public class Neo4jSession implements Session {
     // These helper methods for the delegates are deliberately NOT defined on the Session interface
     //
     public <T, ID extends Serializable> QueryStatements<ID> queryStatementsFor(Class<T> type) {
-        if (metaData.isRelationshipEntityNeo4J(type.getName(), true)) {
+        if (metaData.isRelationshipEntity(type.getName())) {
             return new RelationshipQueryStatements<>();
         } else {
-            final FieldInfo fieldInfo = metaData.classInfoNeo4JOSGI(type.getName(), true).primaryIndexField();
+            final FieldInfo fieldInfo = metaData.classInfo(type.getName()).primaryIndexField();
             return new NodeQueryStatements<>(fieldInfo != null ? fieldInfo.property() : null);
         }
     }
 
     public String entityType(String name) {
-        return metaData.entityType(name, true);
+        return metaData.entityType(name);
     }
 
     public MappingContext context() {
@@ -518,6 +518,8 @@ public class Neo4jSession implements Session {
         return metaData;
     }
 
+    @Deprecated
+    // TODO: Replace calls to this with a mockito test instead.
     // inject a custom driver
     public void setDriver(Driver driver) {
         this.driver = driver;
@@ -529,10 +531,6 @@ public class Neo4jSession implements Session {
 
     public DefaultTransactionManager transactionManager() {
         return txManager;
-    }
-
-    public void info(String msg) {
-        logger.info("Thread {}: {}", Thread.currentThread().getId(), msg);
     }
 
     public void warn(String msg) {
@@ -548,7 +546,8 @@ public class Neo4jSession implements Session {
             if (filter.getOwnerEntityType() == null) {
                 filter.setOwnerEntityType(entityType);
             }
-            filter.setPropertyName(resolvePropertyName(filter.getOwnerEntityType(), filter.getPropertyName()));
+            String propertyName = resolvePropertyName(filter.getOwnerEntityType(), filter.getPropertyName());
+            Filter.setNameFromProperty(filter, propertyName);
 
             ClassInfo classInfo = metaData().classInfoMaybeWrongNeo4JOSGI(entityType.getName(), true);
             FieldInfo fieldInfo = classInfo.fieldsInfo().get(filter.getPropertyName());
@@ -561,7 +560,7 @@ public class Neo4jSession implements Session {
                 resolveRelationshipType(filter);
                 ClassInfo nestedClassInfo = metaData().classInfoMaybeWrongNeo4JOSGI(filter.getNestedPropertyType().getName(), true);
                 filter.setNestedEntityTypeLabel(entityType(nestedClassInfo.name()));
-                if (metaData().isRelationshipEntityNeo4J(nestedClassInfo.name(), true)) {
+                if (metaData().isRelationshipEntity(nestedClassInfo.name())) {
                     filter.setNestedRelationshipEntity(true);
                 }
             }
@@ -581,10 +580,10 @@ public class Neo4jSession implements Session {
     }
 
     private String resolvePropertyName(Class entityType, String propertyName) {
-        ClassInfo classInfo = metaData().classInfoMaybeWrongNeo4JOSGI(entityType.getName(), true);
+        ClassInfo classInfo = metaData().classInfo(entityType.getName());
         FieldInfo fieldInfo = classInfo.propertyFieldByName(propertyName);
         if (fieldInfo != null && fieldInfo.getAnnotations() != null) {
-            AnnotationInfo annotation = fieldInfo.getAnnotations().get(Property.CLASS);
+            AnnotationInfo annotation = fieldInfo.getAnnotations().get(Property.class);
             if (annotation != null) {
                 return annotation.get(Property.NAME, propertyName);
             }
@@ -594,22 +593,22 @@ public class Neo4jSession implements Session {
     }
 
     private void resolveRelationshipType(Filter parameter) {
-        ClassInfo classInfo = metaData().classInfoMaybeWrongNeo4JOSGI(parameter.getOwnerEntityType().getName(), true);
+        ClassInfo classInfo = metaData().classInfo(parameter.getOwnerEntityType().getName());
         FieldInfo fieldInfo = classInfo.relationshipFieldByName(parameter.getNestedPropertyName());
 
         String defaultRelationshipType = RelationshipUtils.inferRelationshipType(parameter.getNestedPropertyName());
         parameter.setRelationshipType(defaultRelationshipType);
         parameter.setRelationshipDirection(Relationship.UNDIRECTED);
         if (fieldInfo.getAnnotations() != null) {
-            AnnotationInfo annotation = fieldInfo.getAnnotations().get(Relationship.CLASS);
+            AnnotationInfo annotation = fieldInfo.getAnnotations().get(Relationship.class);
             if (annotation != null) {
                 parameter.setRelationshipType(annotation.get(Relationship.TYPE, defaultRelationshipType));
                 parameter.setRelationshipDirection(annotation.get(Relationship.DIRECTION, Relationship.UNDIRECTED));
             }
-            if (fieldInfo.getAnnotations().get(StartNode.CLASS) != null) {
+            if (fieldInfo.getAnnotations().get(StartNode.class) != null) {
                 parameter.setRelationshipDirection(Relationship.OUTGOING);
             }
-            if (fieldInfo.getAnnotations().get(EndNode.CLASS) != null) {
+            if (fieldInfo.getAnnotations().get(EndNode.class) != null) {
                 parameter.setRelationshipDirection(Relationship.INCOMING);
             }
         }

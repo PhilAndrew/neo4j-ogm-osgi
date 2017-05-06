@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -15,18 +15,16 @@ package org.neo4j.ogm.session.delegates;
 import java.lang.reflect.Field;
 import java.util.*;
 
-import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.cypher.Filter;
 import org.neo4j.ogm.cypher.query.CypherQuery;
 import org.neo4j.ogm.cypher.query.DefaultRowModelRequest;
-import org.neo4j.ogm.entity.io.FieldWriter;
 import org.neo4j.ogm.metadata.ClassInfo;
+import org.neo4j.ogm.metadata.FieldInfo;
 import org.neo4j.ogm.model.Result;
 import org.neo4j.ogm.model.RowModel;
 import org.neo4j.ogm.request.RowModelRequest;
 import org.neo4j.ogm.request.Statement;
 import org.neo4j.ogm.response.Response;
-import org.neo4j.ogm.session.Capability;
 import org.neo4j.ogm.session.Neo4jSession;
 import org.neo4j.ogm.session.event.Event;
 import org.neo4j.ogm.session.event.PersistenceEvent;
@@ -37,7 +35,7 @@ import org.neo4j.ogm.session.request.strategy.impl.RelationshipDeleteStatements;
 /**
  * @author Vince Bickers
  */
-public class DeleteDelegate  {
+public class DeleteDelegate {
 
     private final Neo4jSession session;
 
@@ -46,7 +44,7 @@ public class DeleteDelegate  {
     }
 
     private DeleteStatements getDeleteStatementsBasedOnType(Class type) {
-        if (session.metaData().isRelationshipEntityNeo4J(type.getName(), true)) {
+        if (session.metaData().isRelationshipEntity(type.getName())) {
             return new RelationshipDeleteStatements();
         }
         return new NodeDeleteStatements();
@@ -81,7 +79,7 @@ public class DeleteDelegate  {
     // TODO : this is being done in multiple requests at the moment, one per object. Why not put them in a single request?
     private void deleteOneOrMoreObjects(Set<Object> neighbours, List<?> objects) {
 
-        Set<Object> notified = new HashSet();
+        Set<Object> notified = new HashSet<>();
 
         if (session.eventsEnabled()) {
             for (Object affectedObject : neighbours) {
@@ -92,14 +90,14 @@ public class DeleteDelegate  {
             }
         }
 
-        for (Object object : objects ) {
+        for (Object object : objects) {
 
-            ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), object);
+            ClassInfo classInfo = session.metaData().classInfo(object);
 
             if (classInfo != null) {
 
                 Field identityField = classInfo.getField(classInfo.identityField());
-                Long identity = (Long) FieldWriter.read(identityField, object);
+                Long identity = (Long) FieldInfo.read(identityField, object);
                 if (identity != null) {
                     Statement request = getDeleteStatementsBasedOnType(object.getClass()).delete(identity);
                     if (session.eventsEnabled()) {
@@ -110,14 +108,14 @@ public class DeleteDelegate  {
                     }
                     RowModelRequest query = new DefaultRowModelRequest(request.getStatement(), request.getParameters());
                     try (Response<RowModel> response = session.requestHandler().execute(query)) {
-                        if (session.metaData().isRelationshipEntityNeo4J(classInfo.name(), true)) {
+                        if (session.metaData().isRelationshipEntity(classInfo.name())) {
                             session.detachRelationshipEntity(identity);
                         } else {
                             session.detachNodeEntity(identity);
                         }
                         if (session.eventsEnabled()) {
                             if (notified.contains(object)) {
-                               session.notifyListeners(new PersistenceEvent(object, Event.TYPE.POST_DELETE));
+                                session.notifyListeners(new PersistenceEvent(object, Event.TYPE.POST_DELETE));
                             }
                         }
                     }
@@ -134,11 +132,10 @@ public class DeleteDelegate  {
                 }
             }
         }
-
     }
 
     public <T> void deleteAll(Class<T> type) {
-        ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), type.getName());
+        ClassInfo classInfo = session.metaData().classInfo(type.getName());
         if (classInfo != null) {
             Statement request = getDeleteStatementsBasedOnType(type).delete(session.entityType(classInfo.name()));
             RowModelRequest query = new DefaultRowModelRequest(request.getStatement(), request.getParameters());
@@ -156,7 +153,7 @@ public class DeleteDelegate  {
 
     public <T> Object delete(Class<T> clazz, Iterable<Filter> filters, boolean listResults) {
 
-        ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), clazz.getSimpleName());
+        ClassInfo classInfo = session.metaData().classInfo(clazz.getSimpleName());
 
         if (classInfo != null) {
 
@@ -190,7 +187,7 @@ public class DeleteDelegate  {
     private List<Long> list(CypherQuery query, boolean isRelationshipEntity) {
         String resultKey = isRelationshipEntity ? "ID(r0)" : "ID(n)";
         Result result = session.query(query.getStatement(), query.getParameters());
-        List<Long> ids = new ArrayList();
+        List<Long> ids = new ArrayList<>();
         for (Map<String, Object> resultEntry : result) {
             Long deletedObjectId = Long.parseLong(resultEntry.get(resultKey).toString());
             postDelete(deletedObjectId, isRelationshipEntity);
@@ -222,14 +219,11 @@ public class DeleteDelegate  {
     /**
      * Handles the post-delete phase of a delete query in which objects have been
      * deleted according to some filter criteria.
-     *
      * In this scenario, we don't necessarily have references to all the deleted
      * objects in the mapping context, so we can only handle the ones we know about.
-     *
      * The two tasks to be done here are to remove the object from the mapping
      * context if we're holding a reference to it, and to raise a POST_DELETE event
      * for every such object found.
-     *
      * Note that is not possible to raise a PRE_DELETE event because we don't
      * know beforehand which objects will be deleted by the query.
      *

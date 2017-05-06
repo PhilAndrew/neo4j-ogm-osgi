@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -39,19 +39,19 @@ public abstract class AbstractTransaction implements Transaction {
      * rollback of an extension will mark the entire transaction to be rolled back, and an attempt to commit such
      * a transaction will fail.
      */
-    protected final AtomicLong extendsCount = new AtomicLong();
+    private final AtomicLong extendsCount = new AtomicLong();
 
 
     /* Objects which are newly persisted into the graph should be registered on the transaction.
      * In the event that a rollback occurs, these objects will have been assigned an id from the database
      * but will be deleted from the graph, so we can reset their ids to null, in order to allow
      * a subsequent save request to operate correctly */
-    private List<Object> registeredNew = new ArrayList<>();
+    private final List<Object> registeredNew = new ArrayList<>();
 
     private Transaction.Status status = Transaction.Status.OPEN;
     protected Transaction.Type type = Type.READ_WRITE;
 
-    public AbstractTransaction(TransactionManager transactionManager) {
+    protected AbstractTransaction(TransactionManager transactionManager) {
         this.transactionManager = transactionManager;
     }
 
@@ -92,8 +92,7 @@ public abstract class AbstractTransaction implements Transaction {
         } else {
             if (status == Status.ROLLBACK_PENDING) {
                 throw new TransactionException("Transaction cannot commit: rollback pending");
-            }
-            else {
+            } else {
                 logger.debug("Thread {}: Commit deferred", Thread.currentThread().getId());
                 status = Status.COMMIT_PENDING;
             }
@@ -124,8 +123,7 @@ public abstract class AbstractTransaction implements Transaction {
         return type;
     }
 
-    public void close()
-    {
+    public void close() {
         long extensions = extendsCount.get();
         logger.debug("Thread {}: Close transaction extent: {}", Thread.currentThread().getId(), extensions);
 
@@ -136,8 +134,7 @@ public abstract class AbstractTransaction implements Transaction {
                 rollback();
             } else if (status == Status.COMMIT_PENDING) {
                 commit();
-            }
-            else if (status == Status.PENDING || status == Status.OPEN) {
+            } else if (status == Status.PENDING || status == Status.OPEN) {
                 rollback();
             }
             status = Status.CLOSED;
@@ -151,8 +148,8 @@ public abstract class AbstractTransaction implements Transaction {
         return extendsCount.get();
     }
 
-    public void registerNew( Object persisted ) {
-        registeredNew.add( persisted );
+    public void registerNew(Object persisted) {
+        registeredNew.add(persisted);
     }
 
     public List<Object> registeredNew() {
@@ -163,5 +160,4 @@ public abstract class AbstractTransaction implements Transaction {
     public void reOpen() {
         status = Status.OPEN;
     }
-
 }

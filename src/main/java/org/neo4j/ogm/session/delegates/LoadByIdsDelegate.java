@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -17,13 +17,10 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.context.GraphEntityMapper;
 import org.neo4j.ogm.cypher.query.Pagination;
 import org.neo4j.ogm.cypher.query.PagingAndSortingQuery;
 import org.neo4j.ogm.cypher.query.SortOrder;
-import org.neo4j.ogm.entity.io.EntityAccessManager;
-import org.neo4j.ogm.entity.io.FieldReader;
 import org.neo4j.ogm.metadata.ClassInfo;
 import org.neo4j.ogm.metadata.FieldInfo;
 import org.neo4j.ogm.model.GraphModel;
@@ -94,19 +91,18 @@ public class LoadByIdsDelegate {
         return loadAll(type, ids, sortOrder, pagination, 1);
     }
 
-    // @todo PHILIP PLA Is this right?
     private <T, ID extends Serializable> boolean includeMappedEntity(Collection<ID> ids, T mapped) {
 
-        final ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), mapped);
+        final ClassInfo classInfo = session.metaData().classInfo(mapped);
         final FieldInfo primaryIndexField = classInfo.primaryIndexField();
 
         if (primaryIndexField != null) {
-            final Object primaryIndexValue = new FieldReader(classInfo, primaryIndexField).read(mapped);
+            final Object primaryIndexValue = primaryIndexField.read(mapped);
             if (ids.contains(primaryIndexValue)) {
                 return true;
             }
         }
-        Object id = EntityAccessManager.getIdentityPropertyReader(classInfo).readProperty(mapped);
+        Object id = classInfo.identityField().readProperty(mapped);
         return ids.contains(id);
     }
 }

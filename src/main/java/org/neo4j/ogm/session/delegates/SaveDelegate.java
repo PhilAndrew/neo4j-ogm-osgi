@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -18,11 +18,10 @@ import java.util.Collection;
 import java.util.List;
 
 import org.neo4j.ogm.Neo4JOSGI;
-import org.neo4j.ogm.compiler.CompileContext;
 import org.neo4j.ogm.context.EntityGraphMapper;
+import org.neo4j.ogm.cypher.compiler.CompileContext;
 import org.neo4j.ogm.metadata.ClassInfo;
 import org.neo4j.ogm.session.Neo4jSession;
-import org.neo4j.ogm.session.event.SaveEventDelegate;
 import org.neo4j.ogm.session.request.RequestExecutor;
 
 /**
@@ -31,63 +30,63 @@ import org.neo4j.ogm.session.request.RequestExecutor;
  */
 public class SaveDelegate {
 
-	private final Neo4jSession session;
-	private final RequestExecutor requestExecutor;
+    private final Neo4jSession session;
+    private final RequestExecutor requestExecutor;
 
-	public SaveDelegate(Neo4jSession neo4jSession) {
-		this.session = neo4jSession;
-		requestExecutor = new RequestExecutor(neo4jSession);
-	}
+    public SaveDelegate(Neo4jSession neo4jSession) {
+        this.session = neo4jSession;
+        requestExecutor = new RequestExecutor(neo4jSession);
+    }
 
-	public <T> void save(T object) {
-		save(object, -1); // default : full tree of changed objects
-	}
+    public <T> void save(T object) {
+        save(object, -1); // default : full tree of changed objects
+    }
 
-	public <T> void save(T object, int depth) {
+    public <T> void save(T object, int depth) {
 
-		SaveEventDelegate eventsDelegate = new SaveEventDelegate(session);
+        SaveEventDelegate eventsDelegate = new SaveEventDelegate(session);
 
-		if (object.getClass().isArray() || Iterable.class.isAssignableFrom(object.getClass())) {
-			Collection<T> objects;
-			if (object.getClass().isArray()) {
-				int length = Array.getLength(object);
-				objects = new ArrayList<>(length);
-				for (int i = 0; i < length; i++) {
-					T arrayElement = (T) Array.get(object, i);
-					objects.add(arrayElement);
-				}
-			} else {
-				objects = (Collection<T>) object;
-			}
-			List<CompileContext> contexts = new ArrayList<>();
-			for (Object element : objects) {
-				if (session.eventsEnabled()) {
-					eventsDelegate.preSave(object);
-				}
-				contexts.add(new EntityGraphMapper(session.metaData(), session.context()).map(element, depth));
-			}
-			requestExecutor.executeSave(contexts);
-			if (session.eventsEnabled()) {
-				eventsDelegate.postSave();
-			}
-		} else {
-			ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), object);
-			if (classInfo != null) {
+        if (object.getClass().isArray() || Iterable.class.isAssignableFrom(object.getClass())) {
+            Collection<T> objects;
+            if (object.getClass().isArray()) {
+                int length = Array.getLength(object);
+                objects = new ArrayList<>(length);
+                for (int i = 0; i < length; i++) {
+                    T arrayElement = (T) Array.get(object, i);
+                    objects.add(arrayElement);
+                }
+            } else {
+                objects = (Collection<T>) object;
+            }
+            List<CompileContext> contexts = new ArrayList<>();
+            for (Object element : objects) {
+                if (session.eventsEnabled()) {
+                    eventsDelegate.preSave(object);
+                }
+                contexts.add(new EntityGraphMapper(session.metaData(), session.context()).map(element, depth));
+            }
+            requestExecutor.executeSave(contexts);
+            if (session.eventsEnabled()) {
+                eventsDelegate.postSave();
+            }
+        } else {
+            ClassInfo classInfo = Neo4JOSGI.classInfo(session.metaData(), object);
+            if (classInfo != null) {
 
-				if (session.eventsEnabled()) {
-					eventsDelegate.preSave(object);
-				}
+                if (session.eventsEnabled()) {
+                    eventsDelegate.preSave(object);
+                }
 
-				CompileContext context = new EntityGraphMapper(session.metaData(), session.context()).map(object, depth);
+                CompileContext context = new EntityGraphMapper(session.metaData(), session.context()).map(object, depth);
 
-				requestExecutor.executeSave(context);
+                requestExecutor.executeSave(context);
 
-				if (session.eventsEnabled()) {
-					eventsDelegate.postSave();
-				}
-			} else {
-				session.warn(object.getClass().getName() + " is not an instance of a persistable class");
-			}
-		}
-	}
+                if (session.eventsEnabled()) {
+                    eventsDelegate.postSave();
+                }
+            } else {
+                session.warn(object.getClass().getName() + " is not an instance of a persistable class");
+            }
+        }
+    }
 }

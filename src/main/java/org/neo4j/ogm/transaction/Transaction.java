@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -30,6 +30,7 @@ public interface Transaction extends AutoCloseable {
 
     /**
      * return the status of the current transaction
+     *
      * @return the Status value associated with the current transaction
      */
     Status status();
@@ -37,6 +38,7 @@ public interface Transaction extends AutoCloseable {
     /**
      * Obtains the read-only status of a transaction.
      * Transaction are read-write by default
+     *
      * @return true if this is a read-only transaction, false otherwise
      */
     boolean isReadOnly();
@@ -64,9 +66,9 @@ public interface Transaction extends AutoCloseable {
     enum Type {
         READ_ONLY, READ_WRITE
     }
+
     /**
      * close this transaction.
      */
     void close();
-
 }

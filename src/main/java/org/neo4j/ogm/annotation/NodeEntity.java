@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -18,20 +18,17 @@ import java.lang.annotation.*;
 
 /**
  * Identifies a domain entity as being backed by a node in the graph.
- *
  * This annotation is not needed if the domain entity's simple classname
  * matches at least one of the labels of the node in the graph (case
  * insensitive)
  *
  * @author Vince Bickers
- *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 public @interface NodeEntity {
 
-    String CLASS = "org.neo4j.ogm.annotation.NodeEntity";
     String LABEL = "label";
 
     String label() default "";

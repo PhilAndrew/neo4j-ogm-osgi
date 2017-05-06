@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,12 +13,12 @@
 
 package org.neo4j.ogm.response.model;
 
-import org.neo4j.ogm.model.Node;
-import org.neo4j.ogm.model.Property;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.neo4j.ogm.model.Node;
+import org.neo4j.ogm.model.Property;
 
 /**
  * @author Michal Bachman
@@ -73,10 +73,6 @@ public class NodeModel implements Node {
         this.id = id;
     }
 
-    public void setPropertyList(List<Property<String, Object>> properties) {
-        this.properties = properties;
-    }
-
     public void setLabels(String[] labels) {
         this.labels = labels;
     }
@@ -100,7 +96,6 @@ public class NodeModel implements Node {
         NodeModel nodeModel = (NodeModel) o;
 
         return id.equals(nodeModel.id);
-
     }
 
     @Override

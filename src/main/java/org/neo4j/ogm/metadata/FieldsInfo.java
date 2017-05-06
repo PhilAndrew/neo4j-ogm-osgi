@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,18 +13,17 @@
 
 package org.neo4j.ogm.metadata;
 
-import org.neo4j.ogm.annotation.Transient;
-
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
 import java.util.*;
+
+import org.neo4j.ogm.annotation.Transient;
 
 /**
  * @author Vince Bickers
  */
 public class FieldsInfo {
 
-    // Start OSGi
 
     public Map<String, FieldInfo> getFieldsHashMap() {
         return fields;
@@ -32,48 +31,69 @@ public class FieldsInfo {
 
     public void set(String name, FieldInfo v) { fields.put(name, v); }
 
-    // End OSGi
 
-    private static final int STATIC_FIELD = 0x0008;
-    private static final int FINAL_FIELD = 0x0010;
-    private static final int TRANSIENT_FIELD = 0x0080;
 
-    private final Map<String, FieldInfo> fields = new HashMap<>();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private final Map<String, FieldInfo> fields;
 
     FieldsInfo() {
+        this.fields = new HashMap<>();
     }
 
-    public FieldsInfo(DataInputStream dataInputStream, ConstantPool constantPool) throws IOException {
-        // get the field information for this class
-        int fieldCount = dataInputStream.readUnsignedShort();
-        for (int i = 0; i < fieldCount; i++) {
-            int accessFlags = dataInputStream.readUnsignedShort();
-            String fieldName = constantPool.readString(dataInputStream.readUnsignedShort()); // name_index
-            String descriptor = constantPool.readString(dataInputStream.readUnsignedShort()); // descriptor_index
-            int attributesCount = dataInputStream.readUnsignedShort();
-            ObjectAnnotations objectAnnotations = new ObjectAnnotations();
-            String typeParameterDescriptor = null; // available as an attribute for parameterised collections
-            for (int j = 0; j < attributesCount; j++) {
-                String attributeName = constantPool.readString(dataInputStream.readUnsignedShort());
-                int attributeLength = dataInputStream.readInt();
-                if ("RuntimeVisibleAnnotations".equals(attributeName)) {
-                    int annotationCount = dataInputStream.readUnsignedShort();
-                    for (int m = 0; m < annotationCount; m++) {
-                        AnnotationInfo info = new AnnotationInfo(dataInputStream, constantPool);
-                        // todo: maybe register just the annotations we're interested in.
-                        objectAnnotations.put(info.getName(), info);
-                    }
-                } else if ("Signature".equals(attributeName)) {
-                    String signature = constantPool.readString(dataInputStream.readUnsignedShort());
-                    if (signature.contains("<")) {
-                        typeParameterDescriptor = signature.substring(signature.indexOf('<') + 1, signature.indexOf('>'));
-                    }
-                } else {
-                    dataInputStream.skipBytes(attributeLength);
+    public FieldsInfo(ClassInfo classInfo, Class<?> cls) {
+        this.fields = new HashMap<>();
+
+        for (Field field : cls.getDeclaredFields()) {
+            final int modifiers = field.getModifiers();
+            if (!Modifier.isTransient(modifiers) && !Modifier.isFinal(modifiers) && !Modifier.isStatic(modifiers)) {
+                ObjectAnnotations objectAnnotations = new ObjectAnnotations();
+                final Annotation[] declaredAnnotations = field.getDeclaredAnnotations();
+                for (Annotation annotation : declaredAnnotations) {
+                    AnnotationInfo info = new AnnotationInfo(annotation);
+                    objectAnnotations.put(info.getName(), info);
                 }
-            }
-            if ((accessFlags & (STATIC_FIELD | FINAL_FIELD | TRANSIENT_FIELD)) == 0 && objectAnnotations.get(Transient.CLASS) == null) {
-                fields.put(fieldName, new FieldInfo(fieldName, descriptor, typeParameterDescriptor, objectAnnotations, "FROM FieldsInfo"));
+                if (objectAnnotations.get(Transient.class) == null) {
+                    String typeParameterDescriptor = null;
+                    final Type genericType = field.getGenericType();
+                    if (genericType instanceof ParameterizedType) {
+                        ParameterizedType parameterizedType = (ParameterizedType) genericType;
+                        final Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+                        if (actualTypeArguments.length > 0) {
+                            for (Type typeArgument : actualTypeArguments) {
+                                if (typeArgument instanceof ParameterizedType) {
+                                    ParameterizedType parameterizedTypeArgument = (ParameterizedType) typeArgument;
+                                    typeParameterDescriptor = parameterizedTypeArgument.getRawType().getTypeName();
+                                    break;
+                                } else if (typeArgument instanceof TypeVariable || typeArgument instanceof WildcardType) {
+                                    typeParameterDescriptor = Object.class.getName();
+                                    break;
+                                } else if (typeArgument instanceof Class) {
+                                    typeParameterDescriptor = ((Class) typeArgument).getName();
+                                }
+                            }
+                        }
+                        if (typeParameterDescriptor == null) {
+                            typeParameterDescriptor = parameterizedType.getRawType().getTypeName();
+                        }
+                    }
+                    if (typeParameterDescriptor == null && (genericType instanceof TypeVariable)) {
+                        typeParameterDescriptor = field.getType().getTypeName();
+                    }
+                    fields.put(field.getName(), new FieldInfo(classInfo, field, typeParameterDescriptor, objectAnnotations));
+                }
             }
         }
     }

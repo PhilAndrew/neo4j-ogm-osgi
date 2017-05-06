@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,69 +13,44 @@
 
 package org.neo4j.ogm.driver;
 
-import java.net.URI;
-
 import org.neo4j.ogm.config.Configuration;
 import org.neo4j.ogm.transaction.TransactionManager;
 
 /**
- *
- * The AbstractConfigurableDriver is used by all drivers to configure themselves.
- *
- * The configure method takes a generic {@link Configuration} object, which is used to configure the
+ * The AbstractConfigurableDriver is used by all drivers to register themselves.
+ * The register method takes a generic {@link Configuration} object, which is used to register the
  * driver appropriately. This object contains of one or more key-value
  * pairs. Every driver configuration must contain a mandatory key "URI", whose corresponding value is
  * a text representation of the driver uri, for example:
- *
  * setConfig("URI", "http://username:password@hostname:port")
- *
  * if credentials are not present the URI, they can be specified in one of
  * two ways, either as a plain text username/password key-values pair in the configuration e.g.
- *
  * setConfig("username", "bilbo")
  * setConfig("password", "hobbit")
- *
  * or, alternatively using the "credentials" key
- *
  * setConfig("credentials", new UsernamePasswordCredentials("bilbo", "hobbit")
  *
- * @author vince
+ * @author Vince Bickers
+ * @author Mark Angrish
  */
 public abstract class AbstractConfigurableDriver implements Driver {
 
-    protected Configuration configuration;
-    protected TransactionManager transactionManager;
+	protected Configuration configuration;
+	protected TransactionManager transactionManager;
 
-    @Override
-    public void configure(Configuration config) {
-        this.configuration = config;
-        setCredentials();
-    }
+	@Override
+	public void configure(Configuration config) {
+		this.configuration = config;
+	}
 
-    @Override
-    public Configuration getConfiguration() {
-        assert(configuration != null);
-        return configuration;
-    }
+	@Override
+	public void setTransactionManager(TransactionManager transactionManager) {
+		assert (transactionManager != null);
+		this.transactionManager = transactionManager;
+	}
 
-    @Override
-    public void setTransactionManager(TransactionManager transactionManager) {
-        assert(transactionManager != null);
-        this.transactionManager = transactionManager;
-    }
-
-    private void setCredentials() {
-        if (configuration.getCredentials() == null && configuration.getURI() != null) {
-            try {
-                URI uri = new URI(configuration.getURI());
-                String authInfo = uri.getUserInfo();
-                if (authInfo != null) {
-                    String[] parts = uri.getUserInfo().split(":");
-                    configuration.setCredentials(parts[0], parts[1]);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+	@Override
+	public Configuration getConfiguration() {
+		return configuration;
+	}
 }

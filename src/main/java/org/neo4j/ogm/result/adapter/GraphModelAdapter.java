@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,12 +13,7 @@
 
 package org.neo4j.ogm.result.adapter;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.neo4j.ogm.model.GraphModel;
 import org.neo4j.ogm.response.model.DefaultGraphModel;
@@ -48,29 +43,26 @@ public abstract class GraphModelAdapter implements ResultAdapter<Map<String, Obj
 
         GraphModel graphModel = new DefaultGraphModel();
 
-        for (Map.Entry<String,Object> mapEntry : data.entrySet()) {
+        for (Map.Entry<String, Object> mapEntry : data.entrySet()) {
 
-            if (isPath(mapEntry.getValue())) {
-                buildPath(mapEntry.getValue(), graphModel, nodeIdentities, edgeIdentities);
-            }
-            else if (isNode(mapEntry.getValue())) {
-                buildNode(mapEntry.getValue(), graphModel, nodeIdentities);
-            }
-            else if (isRelationship(mapEntry.getValue())) {
-                buildRelationship(mapEntry.getValue(), graphModel, nodeIdentities, edgeIdentities);
-            }
-
-            else if (mapEntry.getValue() instanceof Iterable) {
-                Iterable<Object> collection = (Iterable) mapEntry.getValue();
+            final Object value = mapEntry.getValue();
+            if (isPath(value)) {
+                buildPath(value, graphModel, nodeIdentities, edgeIdentities);
+            } else if (isNode(value)) {
+                buildNode(value, graphModel, nodeIdentities);
+            } else if (isRelationship(value)) {
+                buildRelationship(value, graphModel, edgeIdentities);
+            } else if (value instanceof Iterable) {
+                Iterable collection = (Iterable) value;
                 for (Object element : collection) {
                     if (isPath(element)) {
                         buildPath(element, graphModel, nodeIdentities, edgeIdentities);
                     } else if (isNode(element)) {
                         buildNode(element, graphModel, nodeIdentities);
                     } else if (isRelationship(element)) {
-                        buildRelationship(element, graphModel, nodeIdentities, edgeIdentities);
+                        buildRelationship(element, graphModel, edgeIdentities);
                     } else {
-                        throw new RuntimeException("Not handled:" + mapEntry.getValue().getClass());
+                        throw new RuntimeException("Not handled:" + value.getClass());
                     }
                 }
             }
@@ -81,10 +73,10 @@ public abstract class GraphModelAdapter implements ResultAdapter<Map<String, Obj
 
     public void buildPath(Object path, GraphModel graphModel, Set nodeIdentities, Set edgeIdentities) {
         Iterator<Object> relIterator = relsInPath(path).iterator();
-        Iterator<Object> nodeIterator =nodesInPath(path).iterator();
+        Iterator<Object> nodeIterator = nodesInPath(path).iterator();
 
         while (relIterator.hasNext()) {
-            buildRelationship(relIterator.next(), graphModel, nodeIdentities, edgeIdentities);
+            buildRelationship(relIterator.next(), graphModel, edgeIdentities);
         }
 
         while (nodeIterator.hasNext()) {
@@ -92,7 +84,7 @@ public abstract class GraphModelAdapter implements ResultAdapter<Map<String, Obj
         }
     }
 
-    public void buildNode(Object node, GraphModel graphModel, Set nodeIdentities) {
+    public void buildNode(Object node, GraphModel graphModel, Set<Long> nodeIdentities) {
         if (!nodeIdentities.contains(nodeId(node))) {
 
             nodeIdentities.add(nodeId(node));
@@ -101,7 +93,7 @@ public abstract class GraphModelAdapter implements ResultAdapter<Map<String, Obj
             nodeModel.setId(nodeId(node));
             List<String> labelNames = labels(node);
 
-            nodeModel.setLabels(labelNames.toArray(new String[] {}));
+            nodeModel.setLabels(labelNames.toArray(new String[]{}));
 
             nodeModel.setProperties(convertArrayPropertiesToIterable(properties(node)));
 
@@ -109,7 +101,7 @@ public abstract class GraphModelAdapter implements ResultAdapter<Map<String, Obj
         }
     }
 
-    public void buildRelationship(Object relationship, GraphModel graphModel, Set nodeIdentities, Set edgeIdentities) {
+    public void buildRelationship(Object relationship, GraphModel graphModel, Set<Long> edgeIdentities) {
 
         if (!edgeIdentities.contains(relationshipId(relationship))) {
 
@@ -126,7 +118,7 @@ public abstract class GraphModelAdapter implements ResultAdapter<Map<String, Obj
         }
     }
 
-    public Map<String, Object> convertArrayPropertiesToIterable(Map<String, Object> properties) {
+    private Map<String, Object> convertArrayPropertiesToIterable(Map<String, Object> properties) {
         Map<String, Object> props = new HashMap<>();
         for (String k : properties.keySet()) {
             Object v = properties.get(k);
@@ -158,7 +150,7 @@ public abstract class GraphModelAdapter implements ResultAdapter<Map<String, Obj
 
     public abstract Long endNodeId(Object relationship);
 
-    public abstract Map<String,Object> properties(Object container);
+    public abstract Map<String, Object> properties(Object container);
 
     public abstract List<Object> nodesInPath(Object path);
 

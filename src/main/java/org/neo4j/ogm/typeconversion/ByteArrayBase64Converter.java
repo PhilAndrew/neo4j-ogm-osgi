@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -34,5 +34,4 @@ public class ByteArrayBase64Converter implements AttributeConverter<byte[], Stri
         if (value == null) return null;
         return Base64.decodeBase64(value);
     }
-
 }

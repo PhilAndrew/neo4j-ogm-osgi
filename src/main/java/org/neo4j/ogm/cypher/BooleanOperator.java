@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -15,20 +15,21 @@ package org.neo4j.ogm.cypher;
 
 /**
  * Boolean operators used in queries.
+ *
  * @author Luanne Misquitta
  */
 public enum BooleanOperator {
-	NONE(null),
-	AND("AND"),
-	OR("OR");
+    NONE(null),
+    AND("AND"),
+    OR("OR");
 
-	private String value;
+    private String value;
 
-	BooleanOperator(String value) {
-		this.value = value;
-	}
+    BooleanOperator(String value) {
+        this.value = value;
+    }
 
-	public String getValue() {
-		return value;
-	}
+    public String getValue() {
+        return value;
+    }
 }

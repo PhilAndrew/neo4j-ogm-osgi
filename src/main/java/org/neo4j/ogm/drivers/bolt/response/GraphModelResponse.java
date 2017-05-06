@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -25,17 +25,17 @@ import org.neo4j.ogm.transaction.TransactionManager;
  */
 public class GraphModelResponse extends BoltResponse<GraphModel> {
 
-	private final ResultAdapter<Map<String, Object>, GraphModel> adapter = new BoltGraphModelAdapter();
+    private final ResultAdapter<Map<String, Object>, GraphModel> adapter = new BoltGraphModelAdapter();
 
-	public GraphModelResponse(StatementResult result, TransactionManager transactionManager) {
-		super(result, transactionManager);
-	}
+    public GraphModelResponse(StatementResult result, TransactionManager transactionManager) {
+        super(result, transactionManager);
+    }
 
-	@Override
-	public GraphModel fetchNext() {
-		if (result.hasNext()) {
-			return adapter.adapt(result.next().asMap());
-		}
-		return null;
-	}
+    @Override
+    public GraphModel fetchNext() {
+        if (result.hasNext()) {
+            return adapter.adapt(result.next().asMap());
+        }
+        return null;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -25,7 +25,7 @@ public class SortOrder {
         ASC, DESC
     }
 
-    private List<SortClause> sortClauses = new ArrayList();
+    private List<SortClause> sortClauses = new ArrayList<>();
 
     public SortOrder add(Direction direction, String... properties) {
         sortClauses.add(new SortClause(direction, properties));
@@ -53,7 +53,6 @@ public class SortOrder {
         }
         return sb.toString();
     }
-
 }
 
 

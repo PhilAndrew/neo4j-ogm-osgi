@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,8 +13,6 @@
 
 package org.neo4j.ogm.metadata;
 
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,15 +22,16 @@ import java.util.Map;
  */
 public class InterfacesInfo {
 
-    private final Map<String, InterfaceInfo> interfaceMap = new HashMap<>();
+    private final Map<String, InterfaceInfo> interfaceMap;
 
-    InterfacesInfo() {}
+    InterfacesInfo() {
+        this.interfaceMap = new HashMap<>();
+    }
 
-    public InterfacesInfo(DataInputStream dataInputStream, ConstantPool constantPool) throws IOException {
-        int interfaceCount = dataInputStream.readUnsignedShort();
-        for (int i = 0; i < interfaceCount; i++) {
-            String interfaceName = constantPool.lookup(dataInputStream.readUnsignedShort()).replace('/', '.');
-            interfaceMap.put(interfaceName, new InterfaceInfo(interfaceName));
+    InterfacesInfo(Class<?> cls) {
+        this.interfaceMap = new HashMap<>();
+        for (Class iface : cls.getInterfaces()) {
+            interfaceMap.put(iface.getName(), new InterfaceInfo(iface));
         }
     }
 
@@ -40,17 +39,9 @@ public class InterfacesInfo {
         return interfaceMap.values();
     }
 
-    public InterfaceInfo get(String interfaceName) {
-        return interfaceMap.get(interfaceName);
-    }
-
-    void add(InterfaceInfo interfaceInfo) {
-        interfaceMap.put(interfaceInfo.name(), interfaceInfo);
-    }
-
     public void append(InterfacesInfo interfacesInfo) {
         for (InterfaceInfo interfaceInfo : interfacesInfo.list()) {
-            add(interfaceInfo);
+            interfaceMap.put(interfaceInfo.name(), interfaceInfo);
         }
     }
 }

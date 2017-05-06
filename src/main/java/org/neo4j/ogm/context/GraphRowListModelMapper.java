@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -18,9 +18,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.neo4j.ogm.MetaData;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.metadata.ClassInfo;
+import org.neo4j.ogm.metadata.MetaData;
 import org.neo4j.ogm.model.GraphRowListModel;
 import org.neo4j.ogm.model.GraphRowModel;
 import org.neo4j.ogm.response.Response;
@@ -42,7 +42,7 @@ public class GraphRowListModelMapper implements ResponseMapper<GraphRowListModel
 
         List<T> result = new ArrayList<>();
         Set<Long> resultEntityIds = new LinkedHashSet<>();
-        ClassInfo classInfo = metaData.classInfoNeo4JOSGI(type.getName(), true);
+        ClassInfo classInfo = metaData.classInfo(type.getName());
 
         Set<Long> nodeIds = new LinkedHashSet<>();
         Set<Long> edgeIds = new LinkedHashSet<>();
@@ -64,14 +64,12 @@ public class GraphRowListModelMapper implements ResponseMapper<GraphRowListModel
             }
         }
 
-        if (classInfo.annotationsInfo().get(RelationshipEntity.CLASS) == null) {
-            for(Long resultEntityId : resultEntityIds) {
+        if (classInfo.annotationsInfo().get(RelationshipEntity.class) == null) {
+            for (Long resultEntityId : resultEntityIds) {
                 result.add((T) mappingContext.getNodeEntity(resultEntityId));
             }
-
-        }
-        else {
-            for(Long resultEntityId : resultEntityIds) {
+        } else {
+            for (Long resultEntityId : resultEntityIds) {
                 result.add((T) mappingContext.getRelationshipEntity(resultEntityId));
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -25,24 +25,24 @@ import org.neo4j.ogm.transaction.TransactionManager;
  */
 public class GraphRowModelResponse extends BoltResponse<GraphRowListModel> {
 
-	private BoltGraphRowModelAdapter adapter = new BoltGraphRowModelAdapter(new BoltGraphModelAdapter());
+    private BoltGraphRowModelAdapter adapter = new BoltGraphRowModelAdapter(new BoltGraphModelAdapter());
 
-	public GraphRowModelResponse(StatementResult result, TransactionManager transactionManager) {
-		super(result, transactionManager);
-		adapter.setColumns(Arrays.asList(columns()));
-	}
+    public GraphRowModelResponse(StatementResult result, TransactionManager transactionManager) {
+        super(result, transactionManager);
+        adapter.setColumns(Arrays.asList(columns()));
+    }
 
-	@Override
-	public GraphRowListModel fetchNext() {
-		if (result.hasNext()) {
-			DefaultGraphRowListModel model = new DefaultGraphRowListModel();
-			model.add(adapter.adapt(result.next().asMap()));
+    @Override
+    public GraphRowListModel fetchNext() {
+        if (result.hasNext()) {
+            DefaultGraphRowListModel model = new DefaultGraphRowListModel();
+            model.add(adapter.adapt(result.next().asMap()));
 
-			while (result.hasNext()) {
-				model.add(adapter.adapt(result.next().asMap()));
-			}
-			return model;
-		}
-		return null;
-	}
+            while (result.hasNext()) {
+                model.add(adapter.adapt(result.next().asMap()));
+            }
+            return model;
+        }
+        return null;
+    }
 }

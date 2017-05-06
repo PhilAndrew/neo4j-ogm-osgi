@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -19,11 +19,10 @@ import java.lang.annotation.*;
  * @author Vince Bickers
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target(ElementType.FIELD)
 @Inherited
 public @interface Relationship {
 
-    String CLASS = "org.neo4j.ogm.annotation.Relationship";
     String TYPE = "type";
     String DIRECTION = "direction";
 
@@ -32,5 +31,6 @@ public @interface Relationship {
     String UNDIRECTED = "UNDIRECTED";
 
     String type() default "";
+
     String direction() default OUTGOING;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -32,47 +32,51 @@ import org.neo4j.ogm.session.request.strategy.QueryStatements;
  */
 public class LoadOneDelegate {
 
-	private Neo4jSession session;
+    private Neo4jSession session;
 
-	public LoadOneDelegate(Neo4jSession session) {
-		this.session = session;
-	}
+    public LoadOneDelegate(Neo4jSession session) {
+        this.session = session;
+    }
 
-	public <T, ID extends Serializable> T load(Class<T> type, ID id) {
-		return load(type, id, 1);
-	}
+    public <T, ID extends Serializable> T load(Class<T> type, ID id) {
+        return load(type, id, 1);
+    }
 
-	public <T, ID extends Serializable> T load(Class<T> type, ID id, int depth) {
+    public <T, ID extends Serializable> T load(Class<T> type, ID id, int depth) {
 
-		final FieldInfo primaryIndexField = session.metaData().classInfoMaybeWrongNeo4JOSGI(type.getName(), true).primaryIndexField();
-		if (primaryIndexField != null && !primaryIndexField.isTypeOf(id.getClass())) {
-			throw new Neo4jException("Supplied id does not match primary index type on supplied class.");
-		}
+        ClassInfo classInfo = session.metaData().classInfo(type.getName());
+        if (classInfo == null) {
+            throw new IllegalArgumentException(type + " is not a managed entity.");
+        }
+        final FieldInfo primaryIndexField = classInfo.primaryIndexField();
+        if (primaryIndexField != null && !primaryIndexField.isTypeOf(id.getClass())) {
+            throw new Neo4jException("Supplied id does not match primary index type on supplied class.");
+        }
 
-		QueryStatements queryStatements = session.queryStatementsFor(type);
-		PagingAndSortingQuery qry = queryStatements.findOne(id, depth);
+        QueryStatements queryStatements = session.queryStatementsFor(type);
+        PagingAndSortingQuery qry = queryStatements.findOne(id, depth);
 
-		try (Response<GraphModel> response = session.requestHandler().execute((GraphModelRequest) qry)) {
-			new GraphEntityMapper(session.metaData(), session.context()).map(type, response);
-			return lookup(type, id);
-		}
-	}
+        try (Response<GraphModel> response = session.requestHandler().execute((GraphModelRequest) qry)) {
+            new GraphEntityMapper(session.metaData(), session.context()).map(type, response);
+            return lookup(type, id);
+        }
+    }
 
-	private <T, U> T lookup(Class<T> type, U id) {
-		Object ref;
+    private <T, U> T lookup(Class<T> type, U id) {
+        Object ref;
         ClassInfo typeInfo = session.metaData().classInfoMaybeWrongNeo4JOSGI(type.getName(), true);
 
-		if (typeInfo.annotationsInfo().get(RelationshipEntity.CLASS) == null) {
-			ref = session.context().getNodeEntity(id);
-		} else {
-			// Coercing to Long. identityField.convertedType() yields no parametrised type to call cast() with.
-			// But we know this will always be Long.
-			ref = session.context().getRelationshipEntity((Long) id);
-		}
-		try {
-			return type.cast(ref);
-		} catch (ClassCastException cce) {
-			return null;
-		}
-	}
+        if (typeInfo.annotationsInfo().get(RelationshipEntity.class) == null) {
+            ref = session.context().getNodeEntity(id);
+        } else {
+            // Coercing to Long. identityField.convertedType() yields no parametrised type to call cast() with.
+            // But we know this will always be Long.
+            ref = session.context().getRelationshipEntity((Long) id);
+        }
+        try {
+            return type.cast(ref);
+        } catch (ClassCastException cce) {
+            return null;
+        }
+    }
 }

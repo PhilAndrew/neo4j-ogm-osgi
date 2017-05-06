@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -13,8 +13,7 @@
 
 package org.neo4j.ogm.metadata;
 
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,30 +23,35 @@ import java.util.Map;
  */
 public class AnnotationsInfo {
 
-    private final Map<String, AnnotationInfo> classAnnotations = new HashMap<>();
 
-    AnnotationsInfo() {}
+
+
 
     public void addPublic(AnnotationInfo annotationInfo) {
         this.add(annotationInfo);
     }
 
-    public AnnotationsInfo(DataInputStream dataInputStream, ConstantPool constantPool) throws IOException {
-        int attributesCount = dataInputStream.readUnsignedShort();
-        for (int i = 0; i < attributesCount; i++) {
-            String attributeName = constantPool.readString(dataInputStream.readUnsignedShort());
-            int attributeLength = dataInputStream.readInt();
-            if ("RuntimeVisibleAnnotations".equals(attributeName)) {
-                int annotationCount = dataInputStream.readUnsignedShort();
-                for (int m = 0; m < annotationCount; m++) {
-                    AnnotationInfo info = new AnnotationInfo(dataInputStream, constantPool);
-                    // todo: maybe register just the annotations we're interested in.
-                    classAnnotations.put(info.getName(), info);
-                }
-            }
-            else {
-                dataInputStream.skipBytes(attributeLength);
-            }
+    void add(AnnotationInfo annotationInfo) {
+        classAnnotations.put(annotationInfo.getName(), annotationInfo);
+    }
+
+
+
+
+
+    private final Map<String, AnnotationInfo> classAnnotations;
+
+    public AnnotationsInfo() {
+        this.classAnnotations = new HashMap<>();
+    }
+
+    public AnnotationsInfo(Class<?> cls) {
+        this.classAnnotations = new HashMap<>();
+
+        final Annotation[] declaredAnnotations = cls.getDeclaredAnnotations();
+        for (Annotation annotation : declaredAnnotations) {
+            AnnotationInfo info = new AnnotationInfo(annotation);
+            classAnnotations.put(info.getName(), info);
         }
     }
 
@@ -63,13 +67,13 @@ public class AnnotationsInfo {
         return classAnnotations.get(annotationName);
     }
 
-    void add(AnnotationInfo annotationInfo) {
-        classAnnotations.put(annotationInfo.getName(), annotationInfo);
+    public AnnotationInfo get(Class<?> annotationNameClass) {
+        return classAnnotations.get(annotationNameClass.getName());
     }
 
     public void append(AnnotationsInfo annotationsInfo) {
         for (AnnotationInfo annotationInfo : annotationsInfo.list()) {
-            add(annotationInfo);
+            classAnnotations.put(annotationInfo.getName(), annotationInfo);
         }
     }
 }

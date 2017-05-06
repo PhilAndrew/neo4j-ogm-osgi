@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 "Neo Technology,"
+ * Copyright (c) 2002-2017 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
@@ -22,8 +22,8 @@ import org.neo4j.ogm.request.StatementFactory;
  */
 public class RowStatementFactory implements StatementFactory {
 
-	@Override
-	public RowDataStatement statement(String statement, Map<String, Object> parameters) {
-		return new RowDataStatement(statement, parameters);
-	}
+    @Override
+    public RowDataStatement statement(String statement, Map<String, Object> parameters) {
+        return new RowDataStatement(statement, parameters);
+    }
 }
