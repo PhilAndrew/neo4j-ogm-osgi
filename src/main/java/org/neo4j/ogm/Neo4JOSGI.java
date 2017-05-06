@@ -26,43 +26,6 @@ public class Neo4JOSGI {
 
     public static ClassInfo getClassInfo(String fullOrPartialClassName, Boolean queryForARealClass, Map<String, ClassInfo> infos) {
 
-        if (fullOrPartialClassName.equalsIgnoreCase("PERSON_IN_CHARGE"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLPerson";
-        if (fullOrPartialClassName.equalsIgnoreCase("REGISTERED_COUNTRY"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLCountry";
-        if (fullOrPartialClassName.equalsIgnoreCase("OPERATING_COUNTRY"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLCountry";
-        if (fullOrPartialClassName.equalsIgnoreCase("BUSINESS_ADDRESS"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLAddress";
-        if (fullOrPartialClassName.equalsIgnoreCase("ADDRESS_COUNTRY"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLCountry";
-        if (fullOrPartialClassName.equalsIgnoreCase("BUSINESS_BANKS"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLBank";
-
-        if (fullOrPartialClassName.equalsIgnoreCase("BUSINESS_CONTACT"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLContact";
-        if (fullOrPartialClassName.equalsIgnoreCase("BUSINESS_DOCUMENT"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLDocument";
-        if (fullOrPartialClassName.equalsIgnoreCase("BUSINESS_COMMUNICATION"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLCommunication";
-        if (fullOrPartialClassName.equalsIgnoreCase("COMMUNICATION_CONTACT"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLContact";
-
-        if (fullOrPartialClassName.equalsIgnoreCase("BUSINESS"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLBusiness";
-        if (fullOrPartialClassName.equalsIgnoreCase("BANK_BUSINESS"))
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLBusiness";
-
-        if (fullOrPartialClassName.equalsIgnoreCase("BRANDS")) {
-            Iterator<String> keySet = infos.keySet().iterator();
-            while (keySet.hasNext()) {
-                String key = keySet.next();
-                LOGGER.info("@@@@@@@@@@@@@@@@@@@@@@#$#$#$");
-                LOGGER.info("key is: " + key);
-                LOGGER.info("vlaue is: " + infos.get(key));
-            }
-            fullOrPartialClassName = "jumpmicro.shared.model.MMLBrand";
-        }
 
         if ((modelPackagePath!=null) && (!queryForARealClass))
             fullOrPartialClassName = modelPackagePath + "." + fullOrPartialClassName;

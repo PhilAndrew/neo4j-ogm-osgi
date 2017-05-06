@@ -508,7 +508,17 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
 		Object source = mappingContext.getNodeEntity(edge.getStartNode());
 		Object target = mappingContext.getNodeEntity(edge.getEndNode());
 
-        Set<ClassInfo> classInfos = metadata.classInfoByLabelOrType(edge.getType());
+        if (source!=null)
+            logger.error("Source is " + source.getClass().getName());
+        if (target!=null)
+            logger.error("Target is " + target.getClass().getName());
+
+        Set<ClassInfo> classInfos = null;
+
+        if ((target!=null) && (! edge.getType().equalsIgnoreCase(target.getClass().getName())))
+            classInfos = metadata.classInfoByLabelOrType(target.getClass().getName());
+        else
+            classInfos = metadata.classInfoByLabelOrType(edge.getType());
 
         for (ClassInfo classInfo : classInfos) {
 
