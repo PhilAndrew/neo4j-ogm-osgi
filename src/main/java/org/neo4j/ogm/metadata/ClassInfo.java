@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.neo4j.ogm.annotation.*;
+import org.neo4j.ogm.classloader.MetaDataClassLoader;
 import org.neo4j.ogm.exception.MappingException;
 import org.neo4j.ogm.session.Neo4jException;
 import org.neo4j.ogm.utils.ClassUtils;
@@ -753,7 +754,7 @@ public class ClassInfo {
         // No way to get declared fields from current byte code impl. Using reflection instead.
         Field[] declaredFields;
         try {
-            declaredFields = Class.forName(className, false, Thread.currentThread().getContextClassLoader()).getDeclaredFields();
+            declaredFields = MetaDataClassLoader.loadClassOsgi(className).getDeclaredFields();//Class.forName(className, false, Thread.currentThread().getContextClassLoader()).getDeclaredFields();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("Could not reflectively read declared fields", e);
         }

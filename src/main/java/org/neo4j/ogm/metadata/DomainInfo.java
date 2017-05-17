@@ -14,8 +14,13 @@
 package org.neo4j.ogm.metadata;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.net.URL;
 import java.util.*;
 
+import org.neo4j.ogm.Neo4JOGM;
 import org.neo4j.ogm.Neo4JOSGI;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
 import org.neo4j.ogm.exception.MappingException;
@@ -24,6 +29,7 @@ import org.neo4j.ogm.typeconversion.ConversionCallbackRegistry;
 import org.neo4j.ogm.typeconversion.ConvertibleTypes;
 import org.neo4j.ogm.typeconversion.ProxyAttributeConverter;
 import org.neo4j.ogm.utils.ClassUtils;
+import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,14 +55,14 @@ public class DomainInfo {
     public final Set<Class> enumTypes = new HashSet<>();
     private final ConversionCallbackRegistry conversionCallbackRegistry = new ConversionCallbackRegistry();
 
-
+/*
     public DomainInfo(String... packages) {
         long startTime = System.nanoTime();
         load(packages);
 
         LOGGER.info("{} classes loaded in {} nanoseconds", classNameToClassInfo.entrySet().size(), (System.nanoTime() - startTime));
     }
-
+*/
 
     private final List<String> classPaths = new ArrayList<>();
 
@@ -79,12 +85,100 @@ public class DomainInfo {
         //new ClassPathScanner().scan(classPaths, this);
     }
 
+    /**
+     * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+     *
+     * @param packageName The base package
+     * @return The classes
+     * @throws ClassNotFoundException
+     * @throws IOException
+     */
+    private static Class[] getClasses(String packageName)
+            throws ClassNotFoundException, IOException {
 
-/*
+        ClassLoader classLoader = null;
+        List<BundleContext> listOf = Neo4JOGM.getContextList();
+        Class<?> classFound = null;
+
+        List<Class> classes = new ArrayList<Class>();
+
+        breakOut:
+        for (BundleContext bundleContext : listOf) {
+            //
+            try {
+                String arr[] = new String[] {"MObject", "MMovie", "MActor", "MMicroConfig", "MMLAddress", "MMLBank", "MMLBrand", "MMLBusiness", "MMLCommunication", "MMLCompanyProfile", "MMLContact", "MMLCountry",
+                        "MMLDataDictionaryItem", "MMLDocument", "MMLPerson", "MMLSubsidiary"};
+
+                Class<?> ccc = bundleContext.getBundle().loadClass(packageName + ".MMLBusiness");
+                if (ccc!=null) {
+                    for (int i = 0; i < arr.length; i++) {
+                        Class<?> c = bundleContext.getBundle().loadClass("jumpmicro.shared.model." + arr[i]);
+                        classes.add(c);
+                    }
+                }
+
+            } catch (Exception ex) {
+
+            }
+        }
+        return classes.toArray(new Class[classes.size()]);
+    }
+
+    /**
+     * Recursive method used to find all classes in a given directory and subdirs.
+     *
+     * @param directory   The base directory
+     * @param packageName The package name for classes found inside the base directory
+     * @return The classes
+     * @throws ClassNotFoundException
+     */
+    private static List<Class> findClasses(File directory, String packageName) throws ClassNotFoundException {
+        List<Class> classes = new ArrayList<Class>();
+        if (!directory.exists()) {
+            return classes;
+        }
+        File[] files = directory.listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                assert !file.getName().contains(".");
+                classes.addAll(findClasses(file, packageName + "." + file.getName()));
+            } else if (file.getName().endsWith(".class")) {
+                classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6)));
+            }
+        }
+        return classes;
+    }
+
     public static DomainInfo create(String... packages) {
 
         final Set<Class<?>> allClasses = new HashSet<>();
-        new FastClasspathScanner(packages).matchAllClasses(allClasses::add).strictWhitelist().scan();
+
+        for (String s : packages) {
+            try {
+                Class[] classes = getClasses(s);
+                for (Class c : classes) {
+                    Boolean canAdd = false;
+                    Annotation a[] = c.getAnnotations();
+                    for (Annotation a2 : a) {
+                        if (a2.annotationType().getName().equalsIgnoreCase("org.neo4j.ogm.annotation.NodeEntity"))
+                            canAdd = true;
+                        if (a2.annotationType().getName().equalsIgnoreCase("org.neo4j.ogm.annotation.RelationshipEntity"))
+                            canAdd = true;
+                        System.out.println(a2.annotationType().getName());
+                    }
+                    System.out.println(a);
+                    if (canAdd)
+                        allClasses.add(c);
+                }
+                System.out.println("classes " + classes);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        //new FastClasspathScanner(packages).matchAllClasses(allClasses::add).strictWhitelist().scan();
         DomainInfo domainInfo = new DomainInfo();
 
         for (Class<?> cls : allClasses) {
@@ -128,7 +222,7 @@ public class DomainInfo {
 
         return domainInfo;
     }
-*/
+
     private void buildAnnotationNameToClassInfoMap() {
 
         LOGGER.info("Building annotation class map");

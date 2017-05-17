@@ -107,10 +107,9 @@ public class MetaData {
     private Map<String, ClassInfo> classInfos = new HashMap<>();
 
     public MetaData(String... packages) {
-        domainInfo = new DomainInfo(packages);
+        domainInfo = DomainInfo.create(packages);
 
 
-        domainInfo.finish();
     }
 
     /**

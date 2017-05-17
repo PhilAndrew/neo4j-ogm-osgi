@@ -81,7 +81,7 @@ public class ObjectAnnotations {
         if (enumStringConverterInfo != null) {
             String classDescriptor = enumStringConverterInfo.get(EnumString.TYPE, null);
             try {
-                Class clazz = Class.forName(classDescriptor, false, Thread.currentThread().getContextClassLoader());
+                Class clazz = MetaDataClassLoader.loadClassOsgi(classDescriptor);//Class.forName(classDescriptor, false, Thread.currentThread().getContextClassLoader());
                 return new EnumStringConverter(clazz);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -92,7 +92,7 @@ public class ObjectAnnotations {
         if (numberStringConverterInfo != null) {
             String classDescriptor = numberStringConverterInfo.get(NumberString.TYPE, null);
             try {
-                Class clazz = Class.forName(classDescriptor, false, Thread.currentThread().getContextClassLoader());
+                Class clazz = MetaDataClassLoader.loadClassOsgi(classDescriptor);//Class.forName(classDescriptor, false, Thread.currentThread().getContextClassLoader());
                 return new NumberStringConverter(clazz);
             } catch (Exception e) {
                 throw new RuntimeException(e);

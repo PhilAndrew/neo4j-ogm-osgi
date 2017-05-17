@@ -10,6 +10,7 @@ import java.time.{Instant, LocalDateTime}
 import java.lang.{Boolean => JBoolean}
 import java.util.{List => JList}
 import java.util.{LinkedList => JLinkedList}
+
 import org.neo4j.ogm.annotation.typeconversion.DateLong
 
 import scala.beans.BeanProperty
@@ -32,5 +33,11 @@ class MyBusiness {
   @BeanProperty
   var bankBusiness: JSet[MyBank] = _
 
+  @Relationship(`type` = "BANKBUSINESS", direction ="OUTGOING")
+  @BeanProperty
+  var child: JSet[BankBusiness] = _
 
+  @Relationship(`type` = "BANKBUSINESS", direction = "INCOMING")
+  @BeanProperty
+  var parent: JSet[BankBusiness] = _
 }

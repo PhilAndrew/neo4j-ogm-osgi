@@ -11,7 +11,7 @@ import org.neo4j.ogm.session.{Session, SessionFactory}
 //: Released under the MIT License, refer to the project website for licence information.
 //: ----------------------------------------------------------------------------------
 
-object TestNeo4j// extends App
+object TestNeo4j extends App
 {
 
   println("Connect neo4j")
@@ -31,13 +31,27 @@ object TestNeo4j// extends App
 */
 
 
+/*
+  val b1 = new MyBusiness()
+  val b2 = new MyBusiness()
+  val rel = new BankBusiness()
+
+  rel.parentBusiness = b1
+  rel.childBusiness = b2
+
+  session.save(b1)
+  session.save(b2)
+  session.save(rel)
+
+  session.clear()*/
+
 
   val all = session.loadAll(classOf[MyBusiness], 2)
   val x = all.toArray.toSeq
   for (a <- x) {
     println(a)
     println(a.getClass.getName)
-    val bankBusiness = a.asInstanceOf[MyBusiness].bankBusiness
+    val bankBusiness = a.asInstanceOf[MyBusiness].parent
     println("Trying to see if relationships are preserved....")
     println("Trying to see if relationships are preserved....")
     println("Trying to see if relationships are preserved....")
@@ -45,8 +59,8 @@ object TestNeo4j// extends App
     println("Trying to see if relationships are preserved....")
     println("Trying to see if relationships are preserved....")
     println(bankBusiness)
-    println(bankBusiness.size().toString)
-    println(bankBusiness.toArray().toSeq.head.asInstanceOf[MyBank])
+    //println(bankBusiness.size().toString)
+    //println(bankBusiness.toArray().toSeq.head.asInstanceOf[MyBank])
   }
 
   println("Finished")
