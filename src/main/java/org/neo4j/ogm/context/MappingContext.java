@@ -80,9 +80,6 @@ public class MappingContext {
     public Object addNodeEntity(Object entity, Long id) {
 
 
-        System.out.println("Add node entity " + id);
-        System.out.println("Add node entity " + id);
-
         if (nodeEntityRegister.putIfAbsent(id, entity) == null) {
             entity = nodeEntityRegister.get(id);
             addType(entity.getClass(), entity, id);

@@ -161,7 +161,7 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
     }
 
     private <T> void mapEntities(Class<T> type, GraphModel graphModel, Set<Long> nodeIds, Set<Long> edgeIds) {
-        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!! mapEntities");
+
         try {
             mapNodes(graphModel, nodeIds);
             mapRelationships(graphModel, edgeIds);
@@ -301,21 +301,6 @@ public class GraphEntityMapper implements ResponseMapper<GraphModel> {
                 Object target = mappingContext.getNodeEntity(edge.getEndNode());
 
 
-                System.out.println("#");
-                System.out.println("#");
-                System.out.println("#");
-                System.out.println("#");
-                System.out.println("#");
-                System.out.println("#");
-                System.out.println("#");
-                System.out.println("#");
-                System.out.println("#" + edge.getStartNode());
-                System.out.println("#" + edge.getEndNode());
-                if (source!=null)
-                    System.out.println(source.getClass().getName());
-                if (target!=null)
-                    System.out.println(target.getClass().getName());
-                System.out.println("#!!!!!!");
 
                 edgeIds.add(edge.getId());
 

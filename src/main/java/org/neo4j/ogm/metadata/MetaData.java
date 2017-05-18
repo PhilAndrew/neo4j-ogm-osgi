@@ -150,10 +150,6 @@ public class MetaData {
     }
 
     private void debugClassInfos() {
-        for (ClassInfo c: classInfos.values()) {
-            if (c!=null)
-                System.out.println(c.name());
-        }
     }
 
 
@@ -346,7 +342,6 @@ public class MetaData {
     public String entityType(String name) {
         debugClassInfos();
 
-        System.out.println("entity type to fetch: " + name);
 
         ClassInfo classInfo = classInfo(name);
 

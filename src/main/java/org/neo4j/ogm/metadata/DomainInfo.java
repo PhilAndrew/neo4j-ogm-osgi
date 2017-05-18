@@ -164,13 +164,10 @@ public class DomainInfo {
                             canAdd = true;
                         if (a2.annotationType().getName().equalsIgnoreCase("org.neo4j.ogm.annotation.RelationshipEntity"))
                             canAdd = true;
-                        System.out.println(a2.annotationType().getName());
                     }
-                    System.out.println(a);
                     if (canAdd)
                         allClasses.add(c);
                 }
-                System.out.println("classes " + classes);
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
