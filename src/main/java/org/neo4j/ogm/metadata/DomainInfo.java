@@ -102,24 +102,38 @@ public class DomainInfo {
 
         List<Class> classes = new ArrayList<Class>();
 
-        breakOut:
-        for (BundleContext bundleContext : listOf) {
-            //
-            try {
-                String arr[] = new String[] {"MObject", "MMovie", "MActor", "MMicroConfig", "MMLAddress", "MMLBank", "MMLBrand", "MMLBusiness", "MMLCommunication", "MMLCompanyProfile", "MMLContact", "MMLCountry",
-                        "MMLDataDictionaryItem", "MMLDocument", "MMLPerson", "MMLSubsidiary"};
+        try {
+            String arr[] = new String[]{"BankBusiness", "MyBank", "MyBusiness"};
+            for (int i = 0; i < arr.length; i++) {
+                Class<?> c = ClassLoader.getSystemClassLoader().loadClass("jumpmicro.test.model." + arr[i]);
+                classes.add(c);
+            }
+        } catch (java.lang.ClassNotFoundException ex) {
+            //this.getClass().getClassLoader().loadClass(c)
+
+            if (listOf.size()==0) {
+                String arr[] = new String[]{"MObject", "MMovie", "MActor", "MMicroConfig", "MMLAddress", "MMLBank", "MMLBrand", "MMLBusiness", "MMLCommunication", "MMLCompanyProfile", "MMLContact", "MMLCountry",
+                        "MMLDataDictionaryItem", "MMLDocument", "MMLPerson", "MMLSubsidiary", "MMLPersonInCharge"};
+                for (int i = 0; i < arr.length; i++) {
+                    Class<?> c = ClassLoader.getSystemClassLoader().loadClass(packageName + "." + arr[i]);
+                    classes.add(c);
+                }
+            } else {
+            //breakOut:
+            for (BundleContext bundleContext : listOf) {
+                String arr[] = new String[]{"MObject", "MMovie", "MActor", "MMicroConfig", "MMLAddress", "MMLBank", "MMLBrand", "MMLBusiness", "MMLCommunication", "MMLCompanyProfile", "MMLContact", "MMLCountry",
+                        "MMLDataDictionaryItem", "MMLDocument", "MMLPerson", "MMLSubsidiary", "MMLPersonInCharge"};
 
                 Class<?> ccc = bundleContext.getBundle().loadClass(packageName + ".MMLBusiness");
-                if (ccc!=null) {
+                if (ccc != null) {
                     for (int i = 0; i < arr.length; i++) {
                         Class<?> c = bundleContext.getBundle().loadClass("jumpmicro.shared.model." + arr[i]);
                         classes.add(c);
                     }
                 }
-
-            } catch (Exception ex) {
-
             }
+            }
+
         }
         return classes.toArray(new Class[classes.size()]);
     }
