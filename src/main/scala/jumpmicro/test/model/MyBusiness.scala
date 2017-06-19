@@ -28,6 +28,8 @@ class MyBusiness {
   @BeanProperty
   var id: JLong = _
 
+  @BeanProperty
+  var name: JString = ""
 
   @Relationship(`type` = "BANK_BUSINESS", direction = "INCOMING")
   @BeanProperty

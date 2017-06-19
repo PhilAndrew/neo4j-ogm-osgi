@@ -105,7 +105,7 @@ public class DomainInfo {
         try {
             String arr[] = new String[]{"BankBusiness", "MyBank", "MyBusiness"};
             for (int i = 0; i < arr.length; i++) {
-                Class<?> c = ClassLoader.getSystemClassLoader().loadClass("jumpmicro.test.model." + arr[i]);
+                Class<?> c = Class.forName("jumpmicro.test.model." + arr[i]);
                 classes.add(c);
             }
         } catch (java.lang.ClassNotFoundException ex) {

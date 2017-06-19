@@ -29,6 +29,9 @@ class BankBusiness {
   @BeanProperty
   var version: JLong = 1L
 
+  @BeanProperty
+  var name: JString = ""
+
   @StartNode
   @BeanProperty
   var parentBusiness: MyBusiness = null

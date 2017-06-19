@@ -1,12 +1,34 @@
 
 name := "neo4j-ogm-osgi"
 
-version := "1.4.92"
+version := "1.4.93"
 
 scalaVersion := "2.11.8"
 
 organization        := "universe"
 
+
+javacOptions ++= Seq("-encoding", "UTF-8")
+
+
+scalacOptions ++= Seq("-encoding", "UTF-8")
+
+// -Dfile.encoding=UTF-8
+
+javaOptions += "-Dfile.encoding=UTF-8"
+
+
+javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+
+initialize := {
+  val _ = initialize.value
+  if (sys.props("java.specification.version") != "1.8")
+    sys.error("Java 8 is required for this project.")
+}
+
+
+// -encoding UTF-8
+// -Dfile.encoding=UTF8
 
 // Why
 
@@ -18,7 +40,7 @@ libraryDependencies += "org.apache.lucene" % "lucene-sandbox" % "6.4.1"
 
 //libraryDependencies += "commons-httpclient" % "commons-httpclient" % "3.1"
 
-libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.5.3"
+libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.5.2"
 
 //libraryDependencies += "commons-logging" % "commons-logging" % "1.2"
 
@@ -30,7 +52,7 @@ libraryDependencies += "org.osgi" % "osgi.core" % "6.0.0"
 
 //libraryDependencies += "org.neo4j" % "neo4j" % "3.0.6"
 
-libraryDependencies += "org.neo4j.driver" % "neo4j-java-driver" % "1.1.2"
+libraryDependencies += "org.neo4j.driver" % "neo4j-java-driver" % "1.4.0"
 
 libraryDependencies += "commons-io" % "commons-io" % "2.5"
 

@@ -1,5 +1,5 @@
-package jumpmicro.test.model
 
+import jumpmicro.test.model.{BankBusiness, MyBusiness}
 import org.neo4j.ogm.Neo4JOSGI
 import org.neo4j.ogm.config.Configuration
 import org.neo4j.ogm.drivers.bolt.driver.BoltDriver
@@ -11,31 +11,35 @@ import org.neo4j.ogm.session.{Session, SessionFactory}
 //: Released under the MIT License, refer to the project website for licence information.
 //: ----------------------------------------------------------------------------------
 
-object TestNeo4j extends App
+object TestIt extends App
 {
 
   println("Connect neo4j")
 
+  import scala.collection.JavaConverters._
+
+  System.getenv.asScala.toSeq.map( (n) => println(s"$n._1: $n._2"))
+
   val session = getNeo4jSession()
 
-/*
-  val bank = new MyBank()
-  val business = new MyBusiness()
-  bank.bankBusiness = business
+  /*
+    val bank = new MyBank()
+    val business = new MyBusiness()
+    bank.bankBusiness = business
 
-  session.save(business)
+    session.save(business)
 
-  session.save(bank)
+    session.save(bank)
 
-  session.clear()
-*/
+    session.clear()
+  */
 
   val b1 = new MyBusiness()
-  b1.name = "汉字简化方案;"
+  b1.name = new java.lang.String("汉字简化方案;")
   val b2 = new MyBusiness()
-  b2.name = "汉字简化方案;"
+  b2.name = new java.lang.String("汉字简化方案;")
   val rel = new BankBusiness()
-  rel.name = "汉字简化方案;"
+  rel.name = new java.lang.String("汉字简化方案;")
 
   rel.parentBusiness = b1
   rel.childBusiness = b2
@@ -62,9 +66,9 @@ object TestNeo4j extends App
     println("Trying to see if relationships are preserved....")
     println(bankBusiness)
 
-//    for (b <- bankBusiness.toArray.toSeq.asInstanceOf[Seq[BankBusiness]]) {
-//      println(b.name)
-//    }
+    //    for (b <- bankBusiness.toArray.toSeq.asInstanceOf[Seq[BankBusiness]]) {
+    //      println(b.name)
+    //    }
 
     //println(bankBusiness.size().toString)
     //println(bankBusiness.toArray().toSeq.head.asInstanceOf[MyBank])
