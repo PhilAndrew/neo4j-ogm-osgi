@@ -13,7 +13,7 @@ You will need to do the following to publish to your local repository, sorry!
     
 Then the sbt dependency is
 
-    "universe" % "neo4j-ogm-osgi_2.11" % "1.4.39"
+    "universe" % "neo4j-ogm-osgi_2.11" % "1.4.93"
 
 ### Copyright
 
